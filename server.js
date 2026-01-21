@@ -18,7 +18,7 @@ app.use(express.json());
 const verificationTokens = new Map();
 
 // Settings
-const SENDER_EMAIL = process.env.SENDER_EMAIL || 'noreply@yourdomain.com';
+const SENDER_EMAIL = process.env.SENDER_EMAIL || 'noreply@drivecore.co.uk';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 /**
