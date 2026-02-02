@@ -285,6 +285,205 @@ app.get('/api/check/:token', (req, res) => {
 });
 
 /**
+ * POST /api/send-transfer-notification
+ * Sends a tracker transfer notification email to the new owner
+ * Body: { 
+ *   email: string,
+ *   transferId: string,
+ *   trackerDetails: { imei: string, vehicleName: string, registrationNumber?: string },
+ *   fromUserName?: string,
+ *   subscriptionEndDate?: string
+ * }
+ */
+app.post('/api/send-transfer-notification', async (req, res) => {
+  try {
+    const { email, transferId, trackerDetails, fromUserName, subscriptionEndDate } = req.body;
+
+    if (!email || !transferId || !trackerDetails) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email, transferId, and trackerDetails are required' 
+      });
+    }
+
+    const acceptUrl = `${FRONTEND_URL}/transfer/accept?id=${transferId}`;
+    const formattedEndDate = subscriptionEndDate 
+      ? new Date(subscriptionEndDate).toLocaleDateString('en-GB', { 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric' 
+        })
+      : 'N/A';
+
+    // Email template for tracker transfer
+    const msg = {
+      to: email,
+      from: SENDER_EMAIL,
+      subject: `🚗 Vehicle Tracker Transfer Request - ${trackerDetails.vehicleName || 'GPS Tracker'}`,
+      text: `Hello!\n\nYou have received a vehicle tracker transfer request.\n\nVehicle: ${trackerDetails.vehicleName}\nRegistration: ${trackerDetails.registrationNumber || 'N/A'}\nTracker IMEI: ${trackerDetails.imei}\n${fromUserName ? `From: ${fromUserName}\n` : ''}\nThe current subscription is active until: ${formattedEndDate}\n\nAfter this date, you will need to set up your own subscription to continue using the tracking service.\n\nClick here to accept the transfer: ${acceptUrl}\n\nIf you did not expect this transfer, please ignore this email.`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table width="100%" max-width="560px" cellpadding="0" cellspacing="0" style="background: linear-gradient(145deg, #1e3a5f 0%, #1e40af 100%); border-radius: 20px; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.5); border: 1px solid rgba(59, 130, 246, 0.3);">
+                  
+                  <!-- Header -->
+                  <tr>
+                    <td style="padding: 45px 40px 35px; text-align: center; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
+                      <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.15); border-radius: 50%; margin: 0 auto 20px; line-height: 80px;">
+                        <span style="font-size: 40px;">🚗</span>
+                      </div>
+                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                        Vehicle Tracker Transfer
+                      </h1>
+                      <p style="margin: 10px 0 0; color: rgba(255,255,255,0.8); font-size: 16px;">
+                        You've received a transfer request
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      ${fromUserName ? `
+                      <p style="margin: 0 0 25px; color: #94a3b8; font-size: 16px; line-height: 1.6;">
+                        <strong style="color: #e2e8f0;">${fromUserName}</strong> wants to transfer a vehicle tracker to you.
+                      </p>
+                      ` : `
+                      <p style="margin: 0 0 25px; color: #94a3b8; font-size: 16px; line-height: 1.6;">
+                        Someone wants to transfer a vehicle tracker to you.
+                      </p>
+                      `}
+                      
+                      <!-- Vehicle Details Card -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(15, 23, 42, 0.6); border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 30px;">
+                        <tr>
+                          <td style="padding: 25px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td style="padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                  <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Vehicle Name</span>
+                                  <p style="margin: 5px 0 0; color: #ffffff; font-size: 20px; font-weight: 600;">${trackerDetails.vehicleName || 'GPS Tracker'}</p>
+                                </td>
+                              </tr>
+                              ${trackerDetails.registrationNumber ? `
+                              <tr>
+                                <td style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                  <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Registration</span>
+                                  <p style="margin: 5px 0 0; color: #f1f5f9; font-size: 18px; font-weight: 500;">${trackerDetails.registrationNumber}</p>
+                                </td>
+                              </tr>
+                              ` : ''}
+                              <tr>
+                                <td style="padding-top: 15px;">
+                                  <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Tracker IMEI</span>
+                                  <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px; font-family: monospace;">${trackerDetails.imei}</p>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Subscription Info -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(234, 179, 8, 0.1) 100%); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; margin-bottom: 30px;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="margin: 0 0 8px; color: #fbbf24; font-size: 14px; font-weight: 600;">
+                              ⚠️ Important - Subscription Information
+                            </p>
+                            <p style="margin: 0; color: #fcd34d; font-size: 14px; line-height: 1.6;">
+                              The current subscription is active until <strong>${formattedEndDate}</strong>.<br>
+                              After this date, you will need to set up your own subscription to continue using the tracking service.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- CTA Button -->
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" style="padding: 10px 0 35px;">
+                            <a href="${acceptUrl}" style="display: inline-block; padding: 18px 50px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 50px; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);">
+                              Accept Transfer →
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <p style="margin: 0 0 20px; color: #64748b; font-size: 14px; line-height: 1.6;">
+                        Or copy and paste this link into your browser:
+                      </p>
+                      <p style="margin: 0 0 25px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; word-break: break-all;">
+                        <a href="${acceptUrl}" style="color: #60a5fa; text-decoration: none; font-size: 13px;">${acceptUrl}</a>
+                      </p>
+                      
+                      <!-- What Happens Next -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="margin: 0 0 15px; color: #60a5fa; font-size: 14px; font-weight: 600;">
+                              📋 What happens when you accept?
+                            </p>
+                            <ol style="margin: 0; padding-left: 20px; color: #94a3b8; font-size: 14px; line-height: 1.8;">
+                              <li>The tracker will be added to your account</li>
+                              <li>You'll have full access to tracking features</li>
+                              <li>After ${formattedEndDate}, you'll be prompted to subscribe</li>
+                              <li>Choose monthly (£7.99/mo) or yearly (£79.99/yr) plan</li>
+                            </ol>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 25px 40px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05);">
+                      <p style="margin: 0; color: #475569; font-size: 12px; text-align: center; line-height: 1.6;">
+                        If you did not expect this transfer request, please ignore this email.<br>
+                        No action will be taken and the request will expire in 7 days.
+                      </p>
+                      <p style="margin: 15px 0 0; color: #334155; font-size: 11px; text-align: center;">
+                        © ${new Date().getFullYear()} DriveCore - Vehicle Tracking Solutions
+                      </p>
+                    </td>
+                  </tr>
+                  
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `
+    };
+
+    await sgMail.send(msg);
+
+    res.json({ 
+      success: true, 
+      message: 'Transfer notification email sent successfully'
+    });
+
+  } catch (error) {
+    console.error('Error sending transfer email:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to send transfer notification email',
+      details: error.message
+    });
+  }
+});
+
+/**
  * DELETE /api/token/:token
  * Removes a token (for cleanup or cancellation)
  */
@@ -314,19 +513,20 @@ app.get('/health', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`
-  ╔═══════════════════════════════════════════════════════════╗
-  ║                                                           ║
-  ║   📧 Email Verification API                               ║
-  ║   ─────────────────────────────────────────────────────   ║
-  ║   Server running on: http://localhost:${PORT}              ║
-  ║                                                           ║
-  ║   Endpoints:                                              ║
-  ║   POST /api/send-verification  → Send verification email  ║
-  ║   GET  /api/verify/:token      → Verify token             ║
-  ║   POST /api/verify             → Verify token (POST)      ║
-  ║   GET  /api/check/:token       → Check token status       ║
-  ║   GET  /health                 → Health check             ║
-  ║                                                           ║
-  ╚═══════════════════════════════════════════════════════════╝
+  ╔════════════════════════════════════════════════════════════════╗
+  ║                                                                ║
+  ║   📧 Email API - DriveCore                                     ║
+  ║   ──────────────────────────────────────────────────────────   ║
+  ║   Server running on: http://localhost:${PORT}                   ║
+  ║                                                                ║
+  ║   Endpoints:                                                   ║
+  ║   POST /api/send-verification       → Send verification email  ║
+  ║   POST /api/send-transfer-notification → Tracker transfer email║
+  ║   GET  /api/verify/:token           → Verify token             ║
+  ║   POST /api/verify                  → Verify token (POST)      ║
+  ║   GET  /api/check/:token            → Check token status       ║
+  ║   GET  /health                      → Health check             ║
+  ║                                                                ║
+  ╚════════════════════════════════════════════════════════════════╝
   `);
 });
