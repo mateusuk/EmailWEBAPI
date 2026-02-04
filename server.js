@@ -709,6 +709,183 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
 });
 
 /**
+ * POST /api/send-device-added
+ * Sends an email when an existing user adds a new device
+ * Body: { 
+ *   email: string,
+ *   userId?: string,
+ *   firstName: string,
+ *   vehicleName: string,
+ *   planName: string,
+ *   planPrice?: string
+ * }
+ */
+app.post('/api/send-device-added', async (req, res) => {
+  try {
+    const { email, userId, firstName, vehicleName, planName, planPrice } = req.body;
+
+    if (!email || !firstName || !vehicleName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email, firstName, and vehicleName are required' 
+      });
+    }
+
+    const displayPrice = planPrice || '';
+
+    // Email template for device added
+    const msg = {
+      to: email,
+      from: {
+        email: SENDER_EMAIL,
+        name: 'DriveCore'
+      },
+      subject: `New Device Added - ${vehicleName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table width="100%" max-width="560px" cellpadding="0" cellspacing="0" style="background: linear-gradient(145deg, #064e3b 0%, #065f46 100%); border-radius: 20px; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.5); border: 1px solid rgba(16, 185, 129, 0.3);">
+                  
+                  <!-- Header -->
+                  <tr>
+                    <td style="padding: 45px 40px 35px; text-align: center; background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                      <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 20px; line-height: 80px;">
+                        <span style="font-size: 40px;">🚗</span>
+                      </div>
+                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                        New Device Added!
+                      </h1>
+                      <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                        Your subscription has been activated
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="margin: 0 0 25px; color: #d1fae5; font-size: 18px; line-height: 1.6;">
+                        Hello ${firstName}! 👋
+                      </p>
+                      <p style="margin: 0 0 30px; color: #a7f3d0; font-size: 16px; line-height: 1.7;">
+                        Great news! We've successfully added <strong style="color: #ffffff;">${vehicleName}</strong> to your DriveCore account. Your new subscription is now active and ready to use.
+                      </p>
+                      
+                      <!-- Device Details Card -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(6, 78, 59, 0.6); border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 30px;">
+                        <tr>
+                          <td style="padding: 25px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td style="padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                  <span style="color: #6ee7b7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Vehicle Name</span>
+                                  <p style="margin: 5px 0 0; color: #ffffff; font-size: 22px; font-weight: 700;">${vehicleName}</p>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                  <span style="color: #6ee7b7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Subscription Plan</span>
+                                  <p style="margin: 5px 0 0; color: #34d399; font-size: 18px; font-weight: 600;">${planName}</p>
+                                </td>
+                              </tr>
+                              ${displayPrice ? `
+                              <tr>
+                                <td style="padding-top: 15px;">
+                                  <span style="color: #6ee7b7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Price</span>
+                                  <p style="margin: 5px 0 0; color: #10b981; font-size: 18px; font-weight: 600;">${displayPrice}</p>
+                                </td>
+                              </tr>
+                              ` : ''}
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Features -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 25px;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="margin: 0 0 15px; color: #34d399; font-size: 14px; font-weight: 600;">
+                              ✨ Active Features:
+                            </p>
+                            <ul style="margin: 0; padding-left: 20px; color: #a7f3d0; font-size: 14px; line-height: 1.8;">
+                              <li>Real-time GPS tracking</li>
+                              <li>Location history & playback</li>
+                              <li>Speed alerts & geofencing</li>
+                              <li>24/7 monitoring</li>
+                              <li>Mobile & Web access</li>
+                            </ul>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <p style="margin: 0 0 20px; color: #a7f3d0; font-size: 14px; line-height: 1.7; text-align: center;">
+                        🎯 Your device is ready to track!<br>
+                        Log in to your account to start monitoring ${vehicleName}.
+                      </p>
+                      
+                      <!-- CTA Button -->
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" style="padding: 10px 0;">
+                            <a href="${FRONTEND_URL}/gps/login" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 50px; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);">
+                              Open Dashboard →
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 25px 40px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05);">
+                      <p style="margin: 0 0 10px; color: #6ee7b7; font-size: 14px; text-align: center;">
+                        Questions? Contact us at support@drivecore.co.uk
+                      </p>
+                      <p style="margin: 0; color: #065f46; font-size: 11px; text-align: center;">
+                        © ${new Date().getFullYear()} DriveCore UK - Vehicle Tracking Solutions
+                      </p>
+                    </td>
+                  </tr>
+                  
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `
+    };
+
+    await sgMail.send(msg);
+
+    console.log(`✅ Device added email sent to ${email} (Vehicle: ${vehicleName})`);
+
+    res.json({ 
+      success: true, 
+      message: 'Device added email sent successfully' 
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending device added email:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to send device added email',
+      details: error.message
+    });
+  }
+});
+
+/**
  * POST /api/send-invoice
  * Sends an invoice/receipt email to the user
  * Body: { 
@@ -959,6 +1136,7 @@ app.listen(PORT, () => {
   ║   Endpoints:                                                   ║
   ║   POST /api/send-verification       → Send verification email  ║
   ║   POST /api/send-welcome-purchase   → Welcome + verify email   ║
+  ║   POST /api/send-device-added       → Device added email       ║
   ║   POST /api/send-invoice            → Send payment receipt     ║
   ║   POST /api/send-transfer-notification → Tracker transfer email║
   ║   GET  /api/verify/:token           → Verify token             ║
