@@ -709,6 +709,218 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
 });
 
 /**
+ * POST /api/send-invoice
+ * Sends an invoice/receipt email to the user
+ * Body: { 
+ *   email: string,
+ *   invoiceId: string,
+ *   amount: string (e.g., "£7.99"),
+ *   invoiceUrl: string,
+ *   invoicePdf?: string
+ * }
+ */
+app.post('/api/send-invoice', async (req, res) => {
+  try {
+    const { email, invoiceId, amount, invoiceUrl, invoicePdf } = req.body;
+
+    if (!email || !invoiceId || !amount || !invoiceUrl) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email, invoiceId, amount, and invoiceUrl are required' 
+      });
+    }
+
+    // Email template for invoice
+    const msg = {
+      to: email,
+      from: {
+        email: SENDER_EMAIL,
+        name: 'DriveCore'
+      },
+      subject: `Your Payment Receipt - ${invoiceId}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              background-color: #f5f5f5;
+            }
+            .container {
+              background-color: #ffffff;
+              border-radius: 8px;
+              padding: 40px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 32px;
+              font-weight: bold;
+              color: #3b82f6;
+              margin-bottom: 10px;
+            }
+            .invoice-box {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 30px;
+              border-radius: 8px;
+              text-align: center;
+              margin: 30px 0;
+            }
+            .amount {
+              font-size: 48px;
+              font-weight: bold;
+              margin: 20px 0;
+            }
+            .invoice-id {
+              opacity: 0.9;
+              font-size: 14px;
+            }
+            .button {
+              display: inline-block;
+              padding: 14px 32px;
+              background: white;
+              color: #667eea;
+              text-decoration: none;
+              border-radius: 6px;
+              font-weight: 600;
+              margin: 10px 5px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .info-text {
+              color: #666;
+              font-size: 14px;
+              text-align: center;
+              margin: 30px 0;
+              line-height: 1.8;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 40px;
+              padding-top: 30px;
+              border-top: 1px solid #e5e5e5;
+              color: #999;
+              font-size: 12px;
+            }
+            .features {
+              background-color: #f8fafc;
+              padding: 20px;
+              border-radius: 6px;
+              margin: 20px 0;
+            }
+            .feature-item {
+              padding: 8px 0;
+              font-size: 14px;
+            }
+            .checkmark {
+              color: #10b981;
+              margin-right: 8px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo">🚗 DriveCore</div>
+              <h2 style="color: #1e293b; margin: 0;">Payment Receipt</h2>
+            </div>
+
+            <div class="invoice-box">
+              <div style="font-size: 18px; opacity: 0.9;">Payment Successful!</div>
+              <div class="amount">${amount}</div>
+              <div class="invoice-id">Invoice: ${invoiceId}</div>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${invoiceUrl}" class="button">
+                📄 View Invoice
+              </a>
+              ${invoicePdf ? `
+              <a href="${invoicePdf}" class="button">
+                📥 Download PDF
+              </a>
+              ` : ''}
+            </div>
+
+            <div class="features">
+              <div style="font-weight: 600; margin-bottom: 15px; color: #1e293b;">
+                Your Subscription Includes:
+              </div>
+              <div class="feature-item">
+                <span class="checkmark">✓</span> Real-time GPS tracking
+              </div>
+              <div class="feature-item">
+                <span class="checkmark">✓</span> Location history
+              </div>
+              <div class="feature-item">
+                <span class="checkmark">✓</span> Speed alerts & geofencing
+              </div>
+              <div class="feature-item">
+                <span class="checkmark">✓</span> Mobile & Web access
+              </div>
+              <div class="feature-item">
+                <span class="checkmark">✓</span> 24/7 monitoring
+              </div>
+            </div>
+
+            <div class="info-text">
+              📱 <strong>Next Step:</strong> If you haven't already, please verify your email address to access all features.
+              <br><br>
+              💳 Your subscription will automatically renew at the end of each billing period.
+              <br>
+              You can manage your subscription anytime from your account settings.
+            </div>
+
+            <div class="footer">
+              <p>
+                <strong>DriveCore</strong><br>
+                GPS Vehicle Tracking<br>
+                <a href="https://drivecore.co.uk" style="color: #3b82f6; text-decoration: none;">drivecore.co.uk</a>
+              </p>
+              <p style="margin-top: 20px;">
+                Questions? Contact us at <a href="mailto:support@drivecore.co.uk" style="color: #3b82f6;">support@drivecore.co.uk</a>
+              </p>
+              <p style="margin-top: 20px; color: #ccc;">
+                You're receiving this email because you made a purchase at DriveCore.
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    await sgMail.send(msg);
+
+    console.log(`✅ Invoice email sent to ${email} (Invoice: ${invoiceId})`);
+
+    res.json({ 
+      success: true, 
+      message: 'Invoice email sent successfully' 
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending invoice email:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to send invoice email',
+      details: error.message
+    });
+  }
+});
+
+/**
  * DELETE /api/token/:token
  * Removes a token (for cleanup or cancellation)
  */
@@ -746,7 +958,8 @@ app.listen(PORT, () => {
   ║                                                                ║
   ║   Endpoints:                                                   ║
   ║   POST /api/send-verification       → Send verification email  ║
-  ║   POST /api/send-welcome-purchase   → Welcome + verify (NEW!)  ║
+  ║   POST /api/send-welcome-purchase   → Welcome + verify email   ║
+  ║   POST /api/send-invoice            → Send payment receipt     ║
   ║   POST /api/send-transfer-notification → Tracker transfer email║
   ║   GET  /api/verify/:token           → Verify token             ║
   ║   POST /api/verify                  → Verify token (POST)      ║
