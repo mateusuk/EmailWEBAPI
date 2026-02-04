@@ -507,22 +507,33 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
       });
     }
 
-    // Generate unique token for email verification
-    const token = uuidv4();
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    // Determine verification URL
+    let verificationUrl;
+    
+    // If callbackUrl is a complete Firebase verification link (contains oobCode), use it directly
+    // Firebase links look like: https://xxx.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=xxx
+    if (callbackUrl && (callbackUrl.includes('oobCode=') || callbackUrl.includes('firebaseapp.com') || callbackUrl.includes('mode=verifyEmail'))) {
+      // Use Firebase verification link directly - no token generation needed
+      verificationUrl = callbackUrl;
+      console.log('Using Firebase verification link directly');
+    } else {
+      // Fallback: Generate our own token (legacy behavior)
+      const token = uuidv4();
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
-    // Store token
-    verificationTokens.set(token, {
-      email,
-      userId: userId || null,
-      expiresAt,
-      verified: false
-    });
+      // Store token
+      verificationTokens.set(token, {
+        email,
+        userId: userId || null,
+        expiresAt,
+        verified: false
+      });
 
-    // Verification URL
-    const verificationUrl = callbackUrl 
-      ? `${callbackUrl}?token=${token}`
-      : `${FRONTEND_URL}/verify?token=${token}`;
+      verificationUrl = callbackUrl 
+        ? `${callbackUrl}?token=${token}`
+        : `${FRONTEND_URL}/verify?token=${token}`;
+      console.log('Using custom token verification');
+    }
 
     const displayPlanName = planName || 'GPS Tracker';
     const displayPrice = planPrice || '';
