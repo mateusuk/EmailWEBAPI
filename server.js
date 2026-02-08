@@ -37,22 +37,30 @@ app.post('/api/send-verification', async (req, res) => {
       });
     }
 
-    // Generate unique token
-    const token = uuidv4();
-    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    let verificationUrl;
 
-    // Store token
-    verificationTokens.set(token, {
-      email,
-      userId: userId || null,
-      expiresAt,
-      verified: false
-    });
+    // If callbackUrl contains Firebase oobCode or is a direct frontend verify link, use it directly
+    if (callbackUrl && (callbackUrl.includes('oobCode=') || callbackUrl.includes('mode=verifyEmail'))) {
+      verificationUrl = callbackUrl;
+      console.log('Using Firebase/direct verification link for send-verification');
+    } else {
+      // Fallback: Generate our own token (legacy behavior)
+      const token = uuidv4();
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
-    // Verification URL
-    const verificationUrl = callbackUrl 
-      ? `${callbackUrl}?token=${token}`
-      : `${FRONTEND_URL}/verify?token=${token}`;
+      // Store token
+      verificationTokens.set(token, {
+        email,
+        userId: userId || null,
+        expiresAt,
+        verified: false
+      });
+
+      verificationUrl = callbackUrl 
+        ? `${callbackUrl}?token=${token}`
+        : `${FRONTEND_URL}/verify?token=${token}`;
+      console.log('Using custom token verification for send-verification');
+    }
 
     // Email template
     const msg = {
@@ -158,6 +166,141 @@ app.post('/api/send-verification', async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: 'Failed to send verification email',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/resend-verification
+ * Alias for /api/send-verification - resends verification email
+ * Body: { email: string, userId?: string, callbackUrl?: string }
+ */
+app.post('/api/resend-verification', async (req, res) => {
+  // Forward to send-verification handler
+  try {
+    const { email, userId, callbackUrl } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email is required' 
+      });
+    }
+
+    let verificationUrl;
+
+    // If callbackUrl contains Firebase oobCode or is a direct frontend verify link, use it directly
+    if (callbackUrl && (callbackUrl.includes('oobCode=') || callbackUrl.includes('mode=verifyEmail'))) {
+      verificationUrl = callbackUrl;
+      console.log('Using Firebase/direct verification link for resend');
+    } else {
+      // Fallback: Generate our own token
+      const token = uuidv4();
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
+      verificationTokens.set(token, {
+        email,
+        userId: userId || null,
+        expiresAt,
+        verified: false
+      });
+
+      verificationUrl = callbackUrl 
+        ? `${callbackUrl}?token=${token}`
+        : `${FRONTEND_URL}/verify?token=${token}`;
+    }
+
+    const msg = {
+      to: email,
+      from: SENDER_EMAIL,
+      subject: '✉️ Verify your email address',
+      text: `Hello!\n\nClick the link below to verify your email:\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you did not request this verification, please ignore this email.`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f0f0f;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f0f0f; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                <table width="100%" max-width="520px" cellpadding="0" cellspacing="0" style="background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                  <tr>
+                    <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                      <div style="width: 70px; height: 70px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 32px;">✉️</span>
+                      </div>
+                      <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 600; letter-spacing: -0.5px;">
+                        Verify Your Email
+                      </h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="margin: 0 0 25px; color: #a0a0a0; font-size: 16px; line-height: 1.6;">
+                        Hello! 👋
+                      </p>
+                      <p style="margin: 0 0 30px; color: #e0e0e0; font-size: 16px; line-height: 1.7;">
+                        Click the button below to confirm your email address and activate your account.
+                      </p>
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td align="center" style="padding: 10px 0 35px;">
+                            <a href="${verificationUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 50px; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);">
+                              Verify Email →
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="margin: 0 0 20px; color: #707070; font-size: 14px; line-height: 1.6;">
+                        Or copy and paste this link into your browser:
+                      </p>
+                      <p style="margin: 0 0 30px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; word-break: break-all;">
+                        <a href="${verificationUrl}" style="color: #667eea; text-decoration: none; font-size: 13px;">${verificationUrl}</a>
+                      </p>
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(255, 193, 7, 0.1); border-left: 3px solid #ffc107; border-radius: 0 8px 8px 0;">
+                        <tr>
+                          <td style="padding: 15px 20px;">
+                            <p style="margin: 0; color: #ffc107; font-size: 13px;">
+                              ⏰ This link expires in <strong>24 hours</strong>
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 25px 40px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05);">
+                      <p style="margin: 0; color: #505050; font-size: 12px; text-align: center; line-height: 1.6;">
+                        If you did not request this verification, please ignore this email.<br>
+                        Your account will remain secure.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `
+    };
+
+    await sgMail.send(msg);
+
+    res.json({ 
+      success: true, 
+      message: 'Verification email resent successfully'
+    });
+
+  } catch (error) {
+    console.error('Error resending email:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to resend verification email',
       details: error.message
     });
   }
