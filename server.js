@@ -621,13 +621,21 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
                         </tr>
                       </table>
                       
-                      <!-- CTA Button -->
+                      <!-- CTA Button - Simplified for email client compatibility -->
                       <table width="100%" cellpadding="0" cellspacing="0">
                         <tr>
                           <td align="center" style="padding: 10px 0 35px;">
-                            <a href="${verificationUrl}" style="display: inline-block; padding: 18px 50px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 50px; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);">
-                              Verify My Email →
+                            <!--[if mso]>
+                            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${verificationUrl}" style="height:50px;v-text-anchor:middle;width:250px;" arcsize="50%" stroke="f" fillcolor="#3b82f6">
+                              <w:anchorlock/>
+                              <center style="color:#ffffff;font-family:sans-serif;font-size:17px;font-weight:bold;">Verify My Email →</center>
+                            </v:roundrect>
+                            <![endif]-->
+                            <!--[if !mso]><!-->
+                            <a href="${verificationUrl}" target="_blank" style="display: inline-block; padding: 18px 50px; background-color: #3b82f6; color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 50px; mso-hide: all;">
+                              Verify My Email &rarr;
                             </a>
+                            <!--<![endif]-->
                           </td>
                         </tr>
                       </table>
