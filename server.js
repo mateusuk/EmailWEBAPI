@@ -440,7 +440,7 @@ app.get('/api/check/:token', (req, res) => {
  */
 app.post('/api/send-transfer-notification', async (req, res) => {
   try {
-    const { email, transferId, trackerDetails, fromUserName, subscriptionEndDate } = req.body;
+    const { email, transferId, trackerDetails, fromUserName } = req.body;
 
     if (!email || !transferId || !trackerDetails) {
       return res.status(400).json({ 
@@ -449,21 +449,15 @@ app.post('/api/send-transfer-notification', async (req, res) => {
       });
     }
 
-    const acceptUrl = `${FRONTEND_URL}/transfer/accept?id=${transferId}`;
-    const formattedEndDate = subscriptionEndDate 
-      ? new Date(subscriptionEndDate).toLocaleDateString('en-GB', { 
-          day: 'numeric', 
-          month: 'long', 
-          year: 'numeric' 
-        })
-      : 'N/A';
+    // Link goes to registration page with IMEI and email pre-filled, plus transfer ID
+    const acceptUrl = `${FRONTEND_URL}/register?imei=${encodeURIComponent(trackerDetails.imei)}&transferId=${encodeURIComponent(transferId)}&email=${encodeURIComponent(email)}`;
 
     // Email template for tracker transfer
     const msg = {
       to: email,
       from: SENDER_EMAIL,
       subject: `🚗 Vehicle Tracker Transfer Request - ${trackerDetails.vehicleName || 'GPS Tracker'}`,
-      text: `Hello!\n\nYou have received a vehicle tracker transfer request.\n\nVehicle: ${trackerDetails.vehicleName}\nRegistration: ${trackerDetails.registrationNumber || 'N/A'}\nTracker IMEI: ${trackerDetails.imei}\n${fromUserName ? `From: ${fromUserName}\n` : ''}\nThe current subscription is active until: ${formattedEndDate}\n\nAfter this date, you will need to set up your own subscription to continue using the tracking service.\n\nClick here to accept the transfer: ${acceptUrl}\n\nIf you did not expect this transfer, please ignore this email.`,
+      text: `Hello!\n\nYou have received a vehicle tracker transfer request.\n\nVehicle: ${trackerDetails.vehicleName}\nRegistration: ${trackerDetails.registrationNumber || 'N/A'}\nTracker IMEI: ${trackerDetails.imei}\n${fromUserName ? `From: ${fromUserName}\n` : ''}\nTo get started, register your account and choose a subscription plan.\n\nClick here to get started: ${acceptUrl}\n\nIf you did not expect this transfer, please ignore this email.`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -540,11 +534,11 @@ app.post('/api/send-transfer-notification', async (req, res) => {
                         <tr>
                           <td style="padding: 20px;">
                             <p style="margin: 0 0 8px; color: #fbbf24; font-size: 14px; font-weight: 600;">
-                              ⚠️ Important - Subscription Information
+                              ℹ️ Subscription Information
                             </p>
                             <p style="margin: 0; color: #fcd34d; font-size: 14px; line-height: 1.6;">
-                              The current subscription is active until <strong>${formattedEndDate}</strong>.<br>
-                              After this date, you will need to set up your own subscription to continue using the tracking service.
+                              To start using this tracker, you'll need to set up your own subscription.<br>
+                              Simply register and choose your preferred plan.
                             </p>
                           </td>
                         </tr>
@@ -555,7 +549,7 @@ app.post('/api/send-transfer-notification', async (req, res) => {
                         <tr>
                           <td align="center" style="padding: 10px 0 35px;">
                             <a href="${acceptUrl}" style="display: inline-block; padding: 18px 50px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 50px; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);">
-                              Accept Transfer →
+                              Get Started →
                             </a>
                           </td>
                         </tr>
@@ -573,13 +567,13 @@ app.post('/api/send-transfer-notification', async (req, res) => {
                         <tr>
                           <td style="padding: 20px;">
                             <p style="margin: 0 0 15px; color: #60a5fa; font-size: 14px; font-weight: 600;">
-                              📋 What happens when you accept?
+                              📋 How to get started
                             </p>
                             <ol style="margin: 0; padding-left: 20px; color: #94a3b8; font-size: 14px; line-height: 1.8;">
-                              <li>The tracker will be added to your account</li>
-                              <li>You'll have full access to tracking features</li>
-                              <li>After ${formattedEndDate}, you'll be prompted to subscribe</li>
-                              <li>Choose monthly (£7.99/mo) or yearly (£79.99/yr) plan</li>
+                              <li>Click the button above to register your account</li>
+                              <li>The tracker number will be pre-filled for you</li>
+                              <li>Choose your subscription plan (monthly £7.99/mo or yearly £79.99/yr)</li>
+                              <li>Complete payment and start tracking</li>
                             </ol>
                           </td>
                         </tr>
