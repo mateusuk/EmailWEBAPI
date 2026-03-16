@@ -142,11 +142,14 @@ app.post('/api/send-verification', async (req, res) => {
 
     await sgMail.send(msg);
 
-    res.json({ 
+    const response = { 
       success: true, 
-      message: 'Verification email sent successfully',
-      token
-    });
+      message: 'Verification email sent successfully'
+    };
+    if (typeof token !== 'undefined') {
+      response.token = token;
+    }
+    res.json(response);
 
   } catch (error) {
     console.error('Error sending email:', error);
@@ -756,11 +759,14 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
 
     await sgMail.send(msg);
 
-    res.json({ 
+    const response = { 
       success: true, 
-      message: 'Welcome email sent successfully',
-      token // Returns token for verification
-    });
+      message: 'Welcome email sent successfully'
+    };
+    if (typeof token !== 'undefined') {
+      response.token = token;
+    }
+    res.json(response);
 
   } catch (error) {
     console.error('Error sending welcome email:', error);
