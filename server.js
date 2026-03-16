@@ -66,90 +66,77 @@ app.post('/api/send-verification', async (req, res) => {
     const msg = {
       to: email,
       from: SENDER_EMAIL,
-      subject: '✉️ Verify your email address',
+      subject: 'Verify your email address',
       text: `Hello!\n\nClick the link below to verify your email:\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you did not request this verification, please ignore this email.`,
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f0f0f;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f0f0f; padding: 40px 20px;">
-            <tr>
-              <td align="center">
-                <table width="100%" max-width="520px" cellpadding="0" cellspacing="0" style="background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
-                  
-                  <!-- Header -->
-                  <tr>
-                    <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                      <div style="width: 70px; height: 70px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 32px;">✉️</span>
-                      </div>
-                      <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 600; letter-spacing: -0.5px;">
-                        Verify Your Email
-                      </h1>
-                    </td>
-                  </tr>
-                  
-                  <!-- Content -->
-                  <tr>
-                    <td style="padding: 40px;">
-                      <p style="margin: 0 0 25px; color: #a0a0a0; font-size: 16px; line-height: 1.6;">
-                        Hello! 👋
-                      </p>
-                      <p style="margin: 0 0 30px; color: #e0e0e0; font-size: 16px; line-height: 1.7;">
-                        We're almost there! Click the button below to confirm your email address and activate your account.
-                      </p>
-                      
-                      <!-- Button -->
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td align="center" style="padding: 10px 0 35px;">
-                            <a href="${verificationUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 50px; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); transition: transform 0.2s;">
-                              Verify Email →
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <p style="margin: 0 0 20px; color: #707070; font-size: 14px; line-height: 1.6;">
-                        Or copy and paste this link into your browser:
-                      </p>
-                      <p style="margin: 0 0 30px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; word-break: break-all;">
-                        <a href="${verificationUrl}" style="color: #667eea; text-decoration: none; font-size: 13px;">${verificationUrl}</a>
-                      </p>
-                      
-                      <!-- Warning -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(255, 193, 7, 0.1); border-left: 3px solid #ffc107; border-radius: 0 8px 8px 0;">
-                        <tr>
-                          <td style="padding: 15px 20px;">
-                            <p style="margin: 0; color: #ffc107; font-size: 13px;">
-                              ⏰ This link expires in <strong>24 hours</strong>
-                            </p>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  
-                  <!-- Footer -->
-                  <tr>
-                    <td style="padding: 25px 40px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05);">
-                      <p style="margin: 0; color: #505050; font-size: 12px; text-align: center; line-height: 1.6;">
-                        If you did not request this verification, please ignore this email.<br>
-                        Your account will remain secure.
-                      </p>
-                    </td>
-                  </tr>
-                  
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email - DriveCore</title>
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <!-- Header with logo -->
+          <tr>
+            <td bgcolor="#1E293B" style="background: linear-gradient(135deg, #0C1220 0%, #1E293B 50%, #1E3A8A 100%); background-color: #1E293B; padding: 40px 32px 32px; text-align: center;">
+              <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
+              <div style="height: 20px;"></div>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Verify Your Email</h1>
+              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">DriveCore Vehicle Tracking</p>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 36px 32px 40px;">
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">We're almost there! Click the button below to confirm your email address and activate your account.</p>
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding: 8px 0 24px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" align="center">
+                      <tr>
+                        <td align="center" bgcolor="#2563EB" style="border-radius: 12px; padding: 16px 40px; background-color: #2563EB;">
+                          <a href="${verificationUrl}" style="color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none;">Verify Email</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- Plain link -->
+              <div style="background: #F8FAFC; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px; font-size: 12px; color: #64748B; font-weight: 600;">Or copy this link:</p>
+                <a href="${verificationUrl}" style="font-size: 13px; color: #1E40AF; word-break: break-all; text-decoration: underline;">${verificationUrl}</a>
+              </div>
+              <p style="margin: 0; font-size: 13px; color: #94A3B8;">This link expires in 24 hours.</p>
+              <p style="margin: 8px 0 0; font-size: 13px; color: #94A3B8;">If you didn't request this, please ignore this email.</p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #64748B;">— DriveCore Team</p>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #94A3B8;">Smart vehicle tracking</p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">Company No. 16750234 · ICO Registered under UK GDPR - ZC093182 · VAT GB510012376</p>
+              <p style="margin: 12px 0 0; font-size: 12px;">
+                <a href="https://drivecore.co.uk/privacy-policy" style="color: #1E40AF; text-decoration: underline;">Privacy Policy</a>
+                <span style="color: #94A3B8;"> · </span>
+                <a href="https://drivecore.co.uk/terms" style="color: #1E40AF; text-decoration: underline;">Terms of Service</a>
+              </p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">&copy; ${new Date().getFullYear()} DRIVECORE LTD. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
       `
     };
 
@@ -158,7 +145,7 @@ app.post('/api/send-verification', async (req, res) => {
     res.json({ 
       success: true, 
       message: 'Verification email sent successfully',
-      token // Returns token for testing (remove in production)
+      token
     });
 
   } catch (error) {
@@ -214,78 +201,77 @@ app.post('/api/resend-verification', async (req, res) => {
     const msg = {
       to: email,
       from: SENDER_EMAIL,
-      subject: '✉️ Verify your email address',
+      subject: 'Verify your email address',
       text: `Hello!\n\nClick the link below to verify your email:\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you did not request this verification, please ignore this email.`,
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f0f0f;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f0f0f; padding: 40px 20px;">
-            <tr>
-              <td align="center">
-                <table width="100%" max-width="520px" cellpadding="0" cellspacing="0" style="background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
-                  <tr>
-                    <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                      <div style="width: 70px; height: 70px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-                        <span style="font-size: 32px;">✉️</span>
-                      </div>
-                      <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 600; letter-spacing: -0.5px;">
-                        Verify Your Email
-                      </h1>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 40px;">
-                      <p style="margin: 0 0 25px; color: #a0a0a0; font-size: 16px; line-height: 1.6;">
-                        Hello! 👋
-                      </p>
-                      <p style="margin: 0 0 30px; color: #e0e0e0; font-size: 16px; line-height: 1.7;">
-                        Click the button below to confirm your email address and activate your account.
-                      </p>
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td align="center" style="padding: 10px 0 35px;">
-                            <a href="${verificationUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 50px; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);">
-                              Verify Email →
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                      <p style="margin: 0 0 20px; color: #707070; font-size: 14px; line-height: 1.6;">
-                        Or copy and paste this link into your browser:
-                      </p>
-                      <p style="margin: 0 0 30px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; word-break: break-all;">
-                        <a href="${verificationUrl}" style="color: #667eea; text-decoration: none; font-size: 13px;">${verificationUrl}</a>
-                      </p>
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(255, 193, 7, 0.1); border-left: 3px solid #ffc107; border-radius: 0 8px 8px 0;">
-                        <tr>
-                          <td style="padding: 15px 20px;">
-                            <p style="margin: 0; color: #ffc107; font-size: 13px;">
-                              ⏰ This link expires in <strong>24 hours</strong>
-                            </p>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 25px 40px; background: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.05);">
-                      <p style="margin: 0; color: #505050; font-size: 12px; text-align: center; line-height: 1.6;">
-                        If you did not request this verification, please ignore this email.<br>
-                        Your account will remain secure.
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email - DriveCore</title>
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <!-- Header with logo -->
+          <tr>
+            <td bgcolor="#1E293B" style="background: linear-gradient(135deg, #0C1220 0%, #1E293B 50%, #1E3A8A 100%); background-color: #1E293B; padding: 40px 32px 32px; text-align: center;">
+              <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
+              <div style="height: 20px;"></div>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Verify Your Email</h1>
+              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">DriveCore Vehicle Tracking</p>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 36px 32px 40px;">
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Click the button below to confirm your email address and activate your account.</p>
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding: 8px 0 24px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" align="center">
+                      <tr>
+                        <td align="center" bgcolor="#2563EB" style="border-radius: 12px; padding: 16px 40px; background-color: #2563EB;">
+                          <a href="${verificationUrl}" style="color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none;">Verify Email</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- Plain link -->
+              <div style="background: #F8FAFC; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px; font-size: 12px; color: #64748B; font-weight: 600;">Or copy this link:</p>
+                <a href="${verificationUrl}" style="font-size: 13px; color: #1E40AF; word-break: break-all; text-decoration: underline;">${verificationUrl}</a>
+              </div>
+              <p style="margin: 0; font-size: 13px; color: #94A3B8;">This link expires in 24 hours.</p>
+              <p style="margin: 8px 0 0; font-size: 13px; color: #94A3B8;">If you didn't request this, please ignore this email.</p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #64748B;">— DriveCore Team</p>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #94A3B8;">Smart vehicle tracking</p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">Company No. 16750234 · ICO Registered under UK GDPR - ZC093182 · VAT GB510012376</p>
+              <p style="margin: 12px 0 0; font-size: 12px;">
+                <a href="https://drivecore.co.uk/privacy-policy" style="color: #1E40AF; text-decoration: underline;">Privacy Policy</a>
+                <span style="color: #94A3B8;"> · </span>
+                <a href="https://drivecore.co.uk/terms" style="color: #1E40AF; text-decoration: underline;">Terms of Service</a>
+              </p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">&copy; ${new Date().getFullYear()} DRIVECORE LTD. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
       `
     };
 
@@ -456,150 +442,118 @@ app.post('/api/send-transfer-notification', async (req, res) => {
     const msg = {
       to: email,
       from: SENDER_EMAIL,
-      subject: `🚗 Vehicle Tracker Transfer Request - ${trackerDetails.vehicleName || 'GPS Tracker'}`,
+      subject: `Vehicle Tracker Transfer Request - ${trackerDetails.vehicleName || 'GPS Tracker'}`,
       text: `Hello!\n\nYou have received a vehicle tracker transfer request.\n\nVehicle: ${trackerDetails.vehicleName}\nRegistration: ${trackerDetails.registrationNumber || 'N/A'}\nTracker IMEI: ${trackerDetails.imei}\n${fromUserName ? `From: ${fromUserName}\n` : ''}\nTo get started, register your account and choose a subscription plan.\n\nClick here to get started: ${acceptUrl}\n\nIf you did not expect this transfer, please ignore this email.`,
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; padding: 40px 20px;">
-            <tr>
-              <td align="center">
-                <table width="100%" max-width="560px" cellpadding="0" cellspacing="0" style="background: linear-gradient(145deg, #1e3a5f 0%, #1e40af 100%); border-radius: 20px; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.5); border: 1px solid rgba(59, 130, 246, 0.3);">
-                  
-                  <!-- Header -->
-                  <tr>
-                    <td style="padding: 45px 40px 35px; text-align: center; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);">
-                      <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.15); border-radius: 50%; margin: 0 auto 20px; line-height: 80px;">
-                        <span style="font-size: 40px;">🚗</span>
-                      </div>
-                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
-                        Vehicle Tracker Transfer
-                      </h1>
-                      <p style="margin: 10px 0 0; color: rgba(255,255,255,0.8); font-size: 16px;">
-                        You've received a transfer request
-                      </p>
-                    </td>
-                  </tr>
-                  
-                  <!-- Content -->
-                  <tr>
-                    <td style="padding: 40px;">
-                      ${fromUserName ? `
-                      <p style="margin: 0 0 25px; color: #94a3b8; font-size: 16px; line-height: 1.6;">
-                        <strong style="color: #e2e8f0;">${fromUserName}</strong> wants to transfer a vehicle tracker to you.
-                      </p>
-                      ` : `
-                      <p style="margin: 0 0 25px; color: #94a3b8; font-size: 16px; line-height: 1.6;">
-                        Someone wants to transfer a vehicle tracker to you.
-                      </p>
-                      `}
-                      
-                      <!-- Vehicle Details Card -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(15, 23, 42, 0.6); border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 30px;">
-                        <tr>
-                          <td style="padding: 25px;">
-                            <table width="100%" cellpadding="0" cellspacing="0">
-                              <tr>
-                                <td style="padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                  <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Vehicle Name</span>
-                                  <p style="margin: 5px 0 0; color: #ffffff; font-size: 20px; font-weight: 600;">${trackerDetails.vehicleName || 'GPS Tracker'}</p>
-                                </td>
-                              </tr>
-                              ${trackerDetails.registrationNumber ? `
-                              <tr>
-                                <td style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                  <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Registration</span>
-                                  <p style="margin: 5px 0 0; color: #f1f5f9; font-size: 18px; font-weight: 500;">${trackerDetails.registrationNumber}</p>
-                                </td>
-                              </tr>
-                              ` : ''}
-                              <tr>
-                                <td style="padding-top: 15px;">
-                                  <span style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Tracker IMEI</span>
-                                  <p style="margin: 5px 0 0; color: #94a3b8; font-size: 14px; font-family: monospace;">${trackerDetails.imei}</p>
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <!-- Subscription Info -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(234, 179, 8, 0.1) 100%); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; margin-bottom: 30px;">
-                        <tr>
-                          <td style="padding: 20px;">
-                            <p style="margin: 0 0 8px; color: #fbbf24; font-size: 14px; font-weight: 600;">
-                              ℹ️ Subscription Information
-                            </p>
-                            <p style="margin: 0; color: #fcd34d; font-size: 14px; line-height: 1.6;">
-                              To start using this tracker, you'll need to set up your own subscription.<br>
-                              Simply register and choose your preferred plan.
-                            </p>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <!-- CTA Button -->
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td align="center" style="padding: 10px 0 35px;">
-                            <a href="${acceptUrl}" style="display: inline-block; padding: 18px 50px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 50px; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);">
-                              Get Started →
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <p style="margin: 0 0 20px; color: #64748b; font-size: 14px; line-height: 1.6;">
-                        Or copy and paste this link into your browser:
-                      </p>
-                      <p style="margin: 0 0 25px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; word-break: break-all;">
-                        <a href="${acceptUrl}" style="color: #60a5fa; text-decoration: none; font-size: 13px;">${acceptUrl}</a>
-                      </p>
-                      
-                      <!-- What Happens Next -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
-                        <tr>
-                          <td style="padding: 20px;">
-                            <p style="margin: 0 0 15px; color: #60a5fa; font-size: 14px; font-weight: 600;">
-                              📋 How to get started
-                            </p>
-                            <ol style="margin: 0; padding-left: 20px; color: #94a3b8; font-size: 14px; line-height: 1.8;">
-                              <li>Click the button above to register your account</li>
-                              <li>The tracker number will be pre-filled for you</li>
-                              <li>Choose your subscription plan (monthly £7.99/mo or yearly £79.99/yr)</li>
-                              <li>Complete payment and start tracking</li>
-                            </ol>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  
-                  <!-- Footer -->
-                  <tr>
-                    <td style="padding: 25px 40px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05);">
-                      <p style="margin: 0; color: #475569; font-size: 12px; text-align: center; line-height: 1.6;">
-                        If you did not expect this transfer request, please ignore this email.<br>
-                        No action will be taken and the request will expire in 7 days.
-                      </p>
-                      <p style="margin: 15px 0 0; color: #334155; font-size: 11px; text-align: center;">
-                        © ${new Date().getFullYear()} DriveCore - Vehicle Tracking Solutions
-                      </p>
-                    </td>
-                  </tr>
-                  
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Tracker Transfer - DriveCore</title>
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <!-- Header with logo -->
+          <tr>
+            <td bgcolor="#1E293B" style="background: linear-gradient(135deg, #0C1220 0%, #1E293B 50%, #1E3A8A 100%); background-color: #1E293B; padding: 40px 32px 32px; text-align: center;">
+              <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
+              <div style="height: 20px;"></div>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Vehicle Tracker Transfer</h1>
+              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">You've received a transfer request</p>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 36px 32px 40px;">
+              ${fromUserName ? `
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;"><strong>${fromUserName}</strong> wants to transfer a vehicle tracker to you.</p>
+              ` : `
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Someone wants to transfer a vehicle tracker to you.</p>
+              `}
+              <!-- Vehicle Details Card -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F1F5F9; border-radius: 16px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Vehicle Name</span>
+                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 20px; font-weight: 600;">${trackerDetails.vehicleName || 'GPS Tracker'}</p>
+                        </td>
+                      </tr>
+                      ${trackerDetails.registrationNumber ? `
+                      <tr>
+                        <td style="padding: 15px 0; border-bottom: 1px solid #E2E8F0;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Registration</span>
+                          <p style="margin: 5px 0 0; color: #1E293B; font-size: 18px; font-weight: 500;">${trackerDetails.registrationNumber}</p>
+                        </td>
+                      </tr>
+                      ` : ''}
+                      <tr>
+                        <td style="padding-top: 15px;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Tracker IMEI</span>
+                          <p style="margin: 5px 0 0; color: #475569; font-size: 14px; font-family: monospace;">${trackerDetails.imei}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- Subscription Info -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 0 12px 12px 0; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px; color: #92400E; font-size: 14px; font-weight: 600;">Subscription Information</p>
+                    <p style="margin: 0; color: #78350F; font-size: 14px; line-height: 1.6;">To start using this tracker, you'll need to set up your own subscription. Simply register and choose your preferred plan.</p>
+                  </td>
+                </tr>
+              </table>
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding: 8px 0 24px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" align="center">
+                      <tr>
+                        <td align="center" bgcolor="#2563EB" style="border-radius: 12px; padding: 16px 40px; background-color: #2563EB;">
+                          <a href="${acceptUrl}" style="color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none;">Get Started</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- Plain link -->
+              <div style="background: #F8FAFC; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px; font-size: 12px; color: #64748B; font-weight: 600;">Or copy this link:</p>
+                <a href="${acceptUrl}" style="font-size: 13px; color: #1E40AF; word-break: break-all; text-decoration: underline;">${acceptUrl}</a>
+              </div>
+              <p style="margin: 0; font-size: 13px; color: #94A3B8;">If you did not expect this transfer request, please ignore this email.</p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #64748B;">— DriveCore Team</p>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #94A3B8;">Smart vehicle tracking</p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">Company No. 16750234 · ICO Registered under UK GDPR - ZC093182 · VAT GB510012376</p>
+              <p style="margin: 12px 0 0; font-size: 12px;">
+                <a href="https://drivecore.co.uk/privacy-policy" style="color: #1E40AF; text-decoration: underline;">Privacy Policy</a>
+                <span style="color: #94A3B8;"> · </span>
+                <a href="https://drivecore.co.uk/terms" style="color: #1E40AF; text-decoration: underline;">Terms of Service</a>
+              </p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">&copy; ${new Date().getFullYear()} DRIVECORE LTD. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
       `
     };
 
@@ -680,158 +634,123 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
     const msg = {
       to: email,
       from: SENDER_EMAIL,
-      subject: '🎉 Welcome to DriveCore - Payment Successful!',
+      subject: `🎉 Welcome to DriveCore - Payment Successful!`,
       text: `Hello ${firstName}!\n\nThank you for your purchase! Your payment was successful.\n\nPlan: ${displayPlanName}\n${displayPrice ? `Price: ${displayPrice}\n` : ''}\n\nBefore you can start tracking ${displayVehicle}, please verify your email address by clicking the link below:\n\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you have any questions, feel free to contact our support team.\n\nWelcome aboard!\nThe DriveCore Team`,
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; padding: 40px 20px;">
-            <tr>
-              <td align="center">
-                <table width="100%" max-width="560px" cellpadding="0" cellspacing="0" style="background: linear-gradient(145deg, #064e3b 0%, #065f46 100%); border-radius: 20px; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.5); border: 1px solid rgba(16, 185, 129, 0.3);">
-                  
-                  <!-- Header -->
-                  <tr>
-                    <td style="padding: 45px 40px 35px; text-align: center; background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
-                      <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 20px; line-height: 80px;">
-                        <span style="font-size: 40px;">🎉</span>
-                      </div>
-                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
-                        Payment Successful!
-                      </h1>
-                      <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
-                        Welcome to DriveCore, ${firstName}!
-                      </p>
-                    </td>
-                  </tr>
-                  
-                  <!-- Content -->
-                  <tr>
-                    <td style="padding: 40px;">
-                      <p style="margin: 0 0 25px; color: #d1fae5; font-size: 18px; line-height: 1.6;">
-                        Thank you for choosing DriveCore! 🚗
-                      </p>
-                      <p style="margin: 0 0 30px; color: #a7f3d0; font-size: 16px; line-height: 1.7;">
-                        Your payment has been processed successfully and your account is almost ready. You're just one step away from tracking ${displayVehicle}!
-                      </p>
-                      
-                      <!-- Plan Details Card -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(6, 78, 59, 0.6); border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 30px;">
-                        <tr>
-                          <td style="padding: 25px;">
-                            <table width="100%" cellpadding="0" cellspacing="0">
-                              <tr>
-                                <td style="padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                  <span style="color: #6ee7b7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Your Plan</span>
-                                  <p style="margin: 5px 0 0; color: #ffffff; font-size: 22px; font-weight: 700;">${displayPlanName}</p>
-                                </td>
-                              </tr>
-                              ${displayPrice ? `
-                              <tr>
-                                <td style="padding-top: 15px;">
-                                  <span style="color: #6ee7b7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Price</span>
-                                  <p style="margin: 5px 0 0; color: #34d399; font-size: 20px; font-weight: 600;">${displayPrice}</p>
-                                </td>
-                              </tr>
-                              ` : ''}
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <!-- Verification Notice -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.15) 100%); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; margin-bottom: 30px;">
-                        <tr>
-                          <td style="padding: 20px;">
-                            <p style="margin: 0 0 8px; color: #60a5fa; font-size: 14px; font-weight: 600;">
-                              📧 One more step!
-                            </p>
-                            <p style="margin: 0; color: #93c5fd; font-size: 14px; line-height: 1.6;">
-                              Please verify your email address to activate your account and start tracking.
-                            </p>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <!-- CTA Button - Simplified for email client compatibility -->
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td align="center" style="padding: 10px 0 35px;">
-                            <!--[if mso]>
-                            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${verificationUrl}" style="height:50px;v-text-anchor:middle;width:250px;" arcsize="50%" stroke="f" fillcolor="#3b82f6">
-                              <w:anchorlock/>
-                              <center style="color:#ffffff;font-family:sans-serif;font-size:17px;font-weight:bold;">Verify My Email →</center>
-                            </v:roundrect>
-                            <![endif]-->
-                            <!--[if !mso]><!-->
-                            <a href="${verificationUrl}" target="_blank" style="display: inline-block; padding: 18px 50px; background-color: #3b82f6; color: #ffffff; text-decoration: none; font-size: 17px; font-weight: 700; border-radius: 50px; mso-hide: all;">
-                              Verify My Email &rarr;
-                            </a>
-                            <!--<![endif]-->
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <p style="margin: 0 0 20px; color: #6ee7b7; font-size: 14px; line-height: 1.6;">
-                        Or copy and paste this link into your browser:
-                      </p>
-                      <p style="margin: 0 0 25px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; word-break: break-all;">
-                        <a href="${verificationUrl}" style="color: #60a5fa; text-decoration: none; font-size: 13px;">${verificationUrl}</a>
-                      </p>
-                      
-                      <!-- What's Next -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
-                        <tr>
-                          <td style="padding: 20px;">
-                            <p style="margin: 0 0 15px; color: #34d399; font-size: 14px; font-weight: 600;">
-                              🚀 What's next?
-                            </p>
-                            <ol style="margin: 0; padding-left: 20px; color: #a7f3d0; font-size: 14px; line-height: 1.8;">
-                              <li>Click the button above to verify your email</li>
-                              <li>Log in to your DriveCore account</li>
-                              <li>Your GPS tracker is ready to use!</li>
-                              <li>Start tracking your vehicle in real-time</li>
-                            </ol>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <!-- Warning -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 25px; background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; border-radius: 0 8px 8px 0;">
-                        <tr>
-                          <td style="padding: 15px 20px;">
-                            <p style="margin: 0; color: #fbbf24; font-size: 13px;">
-                              ⏰ This verification link expires in <strong>24 hours</strong>
-                            </p>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  
-                  <!-- Footer -->
-                  <tr>
-                    <td style="padding: 25px 40px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05);">
-                      <p style="margin: 0 0 10px; color: #6ee7b7; font-size: 14px; text-align: center;">
-                        Questions? Contact us at support@drivecore.co.uk
-                      </p>
-                      <p style="margin: 0; color: #065f46; font-size: 11px; text-align: center;">
-                        © ${new Date().getFullYear()} DriveCore UK - Vehicle Tracking Solutions
-                      </p>
-                    </td>
-                  </tr>
-                  
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to DriveCore</title>
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <!-- Header with logo -->
+          <tr>
+            <td bgcolor="#1E293B" style="background: linear-gradient(135deg, #0C1220 0%, #1E293B 50%, #1E3A8A 100%); background-color: #1E293B; padding: 40px 32px 32px; text-align: center;">
+              <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
+              <div style="height: 20px;"></div>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Payment Successful!</h1>
+              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">Welcome to DriveCore, ${firstName}!</p>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 36px 32px 40px;">
+              <p style="margin: 0 0 10px; font-size: 18px; line-height: 1.6; color: #0F172A; font-weight: 600;">Thank you for choosing DriveCore!</p>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Your payment has been processed successfully and your account is almost ready. You're just one step away from tracking ${displayVehicle}!</p>
+              <!-- Plan Details Card -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F1F5F9; border-radius: 16px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Your Plan</span>
+                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 22px; font-weight: 700;">${displayPlanName}</p>
+                        </td>
+                      </tr>
+                      ${displayPrice ? `
+                      <tr>
+                        <td style="padding-top: 15px;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Price</span>
+                          <p style="margin: 5px 0 0; color: #2563EB; font-size: 20px; font-weight: 600;">${displayPrice}</p>
+                        </td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- Verification Notice -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #EFF6FF; border-left: 4px solid #2563EB; border-radius: 0 12px 12px 0; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px; color: #1E40AF; font-size: 14px; font-weight: 600;">One more step!</p>
+                    <p style="margin: 0; color: #1E3A8A; font-size: 14px; line-height: 1.6;">Please verify your email address to activate your account and start tracking.</p>
+                  </td>
+                </tr>
+              </table>
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding: 8px 0 24px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" align="center">
+                      <tr>
+                        <td align="center" bgcolor="#2563EB" style="border-radius: 12px; padding: 16px 40px; background-color: #2563EB;">
+                          <a href="${verificationUrl}" style="color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none;">Verify My Email</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- Plain link -->
+              <div style="background: #F8FAFC; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                <p style="margin: 0 0 8px; font-size: 12px; color: #64748B; font-weight: 600;">Or copy this link:</p>
+                <a href="${verificationUrl}" style="font-size: 13px; color: #1E40AF; word-break: break-all; text-decoration: underline;">${verificationUrl}</a>
+              </div>
+              <!-- What's Next -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F8FAFC; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 15px; color: #0F172A; font-size: 14px; font-weight: 600;">What's next?</p>
+                    <ol style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;">
+                      <li>Click the button above to verify your email</li>
+                      <li>Log in to your DriveCore account</li>
+                      <li>Your GPS tracker is ready to use!</li>
+                      <li>Start tracking your vehicle in real-time</li>
+                    </ol>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0; font-size: 13px; color: #94A3B8;">This verification link expires in 24 hours.</p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #64748B;">— DriveCore Team</p>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #94A3B8;">Smart vehicle tracking</p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">Company No. 16750234 · ICO Registered under UK GDPR - ZC093182 · VAT GB510012376</p>
+              <p style="margin: 12px 0 0; font-size: 12px;">
+                <a href="https://drivecore.co.uk/privacy-policy" style="color: #1E40AF; text-decoration: underline;">Privacy Policy</a>
+                <span style="color: #94A3B8;"> · </span>
+                <a href="https://drivecore.co.uk/terms" style="color: #1E40AF; text-decoration: underline;">Terms of Service</a>
+              </p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">&copy; ${new Date().getFullYear()} DRIVECORE LTD. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
       `
     };
 
@@ -887,127 +806,113 @@ app.post('/api/send-device-added', async (req, res) => {
       },
       subject: `New Device Added - ${vehicleName}`,
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; padding: 40px 20px;">
-            <tr>
-              <td align="center">
-                <table width="100%" max-width="560px" cellpadding="0" cellspacing="0" style="background: linear-gradient(145deg, #064e3b 0%, #065f46 100%); border-radius: 20px; overflow: hidden; box-shadow: 0 25px 80px rgba(0,0,0,0.5); border: 1px solid rgba(16, 185, 129, 0.3);">
-                  
-                  <!-- Header -->
-                  <tr>
-                    <td style="padding: 45px 40px 35px; text-align: center; background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
-                      <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 20px; line-height: 80px;">
-                        <span style="font-size: 40px;">🚗</span>
-                      </div>
-                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
-                        New Device Added!
-                      </h1>
-                      <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
-                        Your subscription has been activated
-                      </p>
-                    </td>
-                  </tr>
-                  
-                  <!-- Content -->
-                  <tr>
-                    <td style="padding: 40px;">
-                      <p style="margin: 0 0 25px; color: #d1fae5; font-size: 18px; line-height: 1.6;">
-                        Hello ${firstName}! 👋
-                      </p>
-                      <p style="margin: 0 0 30px; color: #a7f3d0; font-size: 16px; line-height: 1.7;">
-                        Great news! We've successfully added <strong style="color: #ffffff;">${vehicleName}</strong> to your DriveCore account. Your new subscription is now active and ready to use.
-                      </p>
-                      
-                      <!-- Device Details Card -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(6, 78, 59, 0.6); border-radius: 16px; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 30px;">
-                        <tr>
-                          <td style="padding: 25px;">
-                            <table width="100%" cellpadding="0" cellspacing="0">
-                              <tr>
-                                <td style="padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                  <span style="color: #6ee7b7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Vehicle Name</span>
-                                  <p style="margin: 5px 0 0; color: #ffffff; font-size: 22px; font-weight: 700;">${vehicleName}</p>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td style="padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                  <span style="color: #6ee7b7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Subscription Plan</span>
-                                  <p style="margin: 5px 0 0; color: #34d399; font-size: 18px; font-weight: 600;">${planName}</p>
-                                </td>
-                              </tr>
-                              ${displayPrice ? `
-                              <tr>
-                                <td style="padding-top: 15px;">
-                                  <span style="color: #6ee7b7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Price</span>
-                                  <p style="margin: 5px 0 0; color: #10b981; font-size: 18px; font-weight: 600;">${displayPrice}</p>
-                                </td>
-                              </tr>
-                              ` : ''}
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <!-- Features -->
-                      <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 25px;">
-                        <tr>
-                          <td style="padding: 20px;">
-                            <p style="margin: 0 0 15px; color: #34d399; font-size: 14px; font-weight: 600;">
-                              ✨ Active Features:
-                            </p>
-                            <ul style="margin: 0; padding-left: 20px; color: #a7f3d0; font-size: 14px; line-height: 1.8;">
-                              <li>Real-time GPS tracking</li>
-                              <li>Location history & playback</li>
-                              <li>Speed alerts & geofencing</li>
-                              <li>24/7 monitoring</li>
-                              <li>Mobile & Web access</li>
-                            </ul>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <p style="margin: 0 0 20px; color: #a7f3d0; font-size: 14px; line-height: 1.7; text-align: center;">
-                        🎯 Your device is ready to track!<br>
-                        Log in to your account to start monitoring ${vehicleName}.
-                      </p>
-                      
-                      <!-- CTA Button -->
-                      <table width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td align="center" style="padding: 10px 0;">
-                            <a href="${FRONTEND_URL}/gps/login" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 50px; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);">
-                              Open Dashboard →
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  
-                  <!-- Footer -->
-                  <tr>
-                    <td style="padding: 25px 40px; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05);">
-                      <p style="margin: 0 0 10px; color: #6ee7b7; font-size: 14px; text-align: center;">
-                        Questions? Contact us at support@drivecore.co.uk
-                      </p>
-                      <p style="margin: 0; color: #065f46; font-size: 11px; text-align: center;">
-                        © ${new Date().getFullYear()} DriveCore UK - Vehicle Tracking Solutions
-                      </p>
-                    </td>
-                  </tr>
-                  
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Device Added - DriveCore</title>
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <!-- Header with logo -->
+          <tr>
+            <td bgcolor="#1E293B" style="background: linear-gradient(135deg, #0C1220 0%, #1E293B 50%, #1E3A8A 100%); background-color: #1E293B; padding: 40px 32px 32px; text-align: center;">
+              <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
+              <div style="height: 20px;"></div>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">New Device Added!</h1>
+              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">Your subscription has been activated</p>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 36px 32px 40px;">
+              <p style="margin: 0 0 10px; font-size: 18px; line-height: 1.6; color: #0F172A; font-weight: 600;">Hello ${firstName}!</p>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Great news! We've successfully added <strong>${vehicleName}</strong> to your DriveCore account. Your new subscription is now active and ready to use.</p>
+              <!-- Device Details Card -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F1F5F9; border-radius: 16px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Vehicle Name</span>
+                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 22px; font-weight: 700;">${vehicleName}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 15px 0; border-bottom: 1px solid #E2E8F0;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Subscription Plan</span>
+                          <p style="margin: 5px 0 0; color: #2563EB; font-size: 18px; font-weight: 600;">${planName}</p>
+                        </td>
+                      </tr>
+                      ${displayPrice ? `
+                      <tr>
+                        <td style="padding-top: 15px;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Price</span>
+                          <p style="margin: 5px 0 0; color: #2563EB; font-size: 18px; font-weight: 600;">${displayPrice}</p>
+                        </td>
+                      </tr>
+                      ` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- Features -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F8FAFC; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 15px; color: #0F172A; font-size: 14px; font-weight: 600;">Active Features:</p>
+                    <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;">
+                      <li>Real-time GPS tracking</li>
+                      <li>Location history &amp; playback</li>
+                      <li>Speed alerts &amp; geofencing</li>
+                      <li>24/7 monitoring</li>
+                      <li>Mobile &amp; Web access</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.7; color: #334155; text-align: center;">Your device is ready to track! Log in to your account to start monitoring ${vehicleName}.</p>
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding: 8px 0 24px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" align="center">
+                      <tr>
+                        <td align="center" bgcolor="#2563EB" style="border-radius: 12px; padding: 16px 40px; background-color: #2563EB;">
+                          <a href="${FRONTEND_URL}/gps/login" style="color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none;">Open Dashboard</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #64748B;">— DriveCore Team</p>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #94A3B8;">Smart vehicle tracking</p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">Company No. 16750234 · ICO Registered under UK GDPR - ZC093182 · VAT GB510012376</p>
+              <p style="margin: 12px 0 0; font-size: 12px;">
+                <a href="https://drivecore.co.uk/privacy-policy" style="color: #1E40AF; text-decoration: underline;">Privacy Policy</a>
+                <span style="color: #94A3B8;"> · </span>
+                <a href="https://drivecore.co.uk/terms" style="color: #1E40AF; text-decoration: underline;">Terms of Service</a>
+              </p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">&copy; ${new Date().getFullYear()} DRIVECORE LTD. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
       `
     };
 
@@ -1061,165 +966,99 @@ app.post('/api/send-invoice', async (req, res) => {
       },
       subject: `Your Payment Receipt - ${invoiceId}`,
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-              background-color: #f5f5f5;
-            }
-            .container {
-              background-color: #ffffff;
-              border-radius: 8px;
-              padding: 40px;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            .header {
-              text-align: center;
-              margin-bottom: 30px;
-            }
-            .logo {
-              font-size: 32px;
-              font-weight: bold;
-              color: #3b82f6;
-              margin-bottom: 10px;
-            }
-            .invoice-box {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              padding: 30px;
-              border-radius: 8px;
-              text-align: center;
-              margin: 30px 0;
-            }
-            .amount {
-              font-size: 48px;
-              font-weight: bold;
-              margin: 20px 0;
-            }
-            .invoice-id {
-              opacity: 0.9;
-              font-size: 14px;
-            }
-            .button {
-              display: inline-block;
-              padding: 14px 32px;
-              background: white;
-              color: #667eea;
-              text-decoration: none;
-              border-radius: 6px;
-              font-weight: 600;
-              margin: 10px 5px;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            .info-text {
-              color: #666;
-              font-size: 14px;
-              text-align: center;
-              margin: 30px 0;
-              line-height: 1.8;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 40px;
-              padding-top: 30px;
-              border-top: 1px solid #e5e5e5;
-              color: #999;
-              font-size: 12px;
-            }
-            .features {
-              background-color: #f8fafc;
-              padding: 20px;
-              border-radius: 6px;
-              margin: 20px 0;
-            }
-            .feature-item {
-              padding: 8px 0;
-              font-size: 14px;
-            }
-            .checkmark {
-              color: #10b981;
-              margin-right: 8px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <div class="logo">🚗 DriveCore</div>
-              <h2 style="color: #1e293b; margin: 0;">Payment Receipt</h2>
-            </div>
-
-            <div class="invoice-box">
-              <div style="font-size: 18px; opacity: 0.9;">Payment Successful!</div>
-              <div class="amount">${amount}</div>
-              <div class="invoice-id">Invoice: ${invoiceId}</div>
-            </div>
-
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${invoiceUrl}" class="button">
-                📄 View Invoice
-              </a>
-              ${invoicePdf ? `
-              <a href="${invoicePdf}" class="button">
-                📥 Download PDF
-              </a>
-              ` : ''}
-            </div>
-
-            <div class="features">
-              <div style="font-weight: 600; margin-bottom: 15px; color: #1e293b;">
-                Your Subscription Includes:
-              </div>
-              <div class="feature-item">
-                <span class="checkmark">✓</span> Real-time GPS tracking
-              </div>
-              <div class="feature-item">
-                <span class="checkmark">✓</span> Location history
-              </div>
-              <div class="feature-item">
-                <span class="checkmark">✓</span> Speed alerts & geofencing
-              </div>
-              <div class="feature-item">
-                <span class="checkmark">✓</span> Mobile & Web access
-              </div>
-              <div class="feature-item">
-                <span class="checkmark">✓</span> 24/7 monitoring
-              </div>
-            </div>
-
-            <div class="info-text">
-              📱 <strong>Next Step:</strong> If you haven't already, please verify your email address to access all features.
-              <br><br>
-              💳 Your subscription will automatically renew at the end of each billing period.
-              <br>
-              You can manage your subscription anytime from your account settings.
-            </div>
-
-            <div class="footer">
-              <p>
-                <strong>DriveCore</strong><br>
-                GPS Vehicle Tracking<br>
-                <a href="https://drivecore.co.uk" style="color: #3b82f6; text-decoration: none;">drivecore.co.uk</a>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Receipt - DriveCore</title>
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <!-- Header with logo -->
+          <tr>
+            <td bgcolor="#1E293B" style="background: linear-gradient(135deg, #0C1220 0%, #1E293B 50%, #1E3A8A 100%); background-color: #1E293B; padding: 40px 32px 32px; text-align: center;">
+              <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
+              <div style="height: 20px;"></div>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Payment Receipt</h1>
+              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">DriveCore Vehicle Tracking</p>
+            </td>
+          </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 36px 32px 40px;">
+              <!-- Invoice Amount Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F1F5F9; border-radius: 16px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 30px; text-align: center;">
+                    <p style="margin: 0 0 8px; font-size: 16px; color: #64748B;">Payment Successful!</p>
+                    <p style="margin: 0 0 12px; font-size: 42px; font-weight: 700; color: #0F172A;">${amount}</p>
+                    <p style="margin: 0; font-size: 14px; color: #94A3B8;">Invoice: ${invoiceId}</p>
+                  </td>
+                </tr>
+              </table>
+              <!-- Action Buttons -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding: 8px 0 24px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" align="center">
+                      <tr>
+                        <td align="center" bgcolor="#2563EB" style="border-radius: 12px; padding: 16px 40px; background-color: #2563EB;">
+                          <a href="${invoiceUrl}" style="color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none;">View Invoice</a>
+                        </td>
+                        ${invoicePdf ? `
+                        <td style="width: 12px;"></td>
+                        <td align="center" bgcolor="#F1F5F9" style="border-radius: 12px; padding: 16px 32px; background-color: #F1F5F9;">
+                          <a href="${invoicePdf}" style="color: #1E40AF !important; font-size: 16px; font-weight: 600; text-decoration: none;">Download PDF</a>
+                        </td>
+                        ` : ''}
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- Features -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F8FAFC; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 15px; color: #0F172A; font-size: 14px; font-weight: 600;">Your Subscription Includes:</p>
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr><td style="padding: 6px 0; font-size: 14px; color: #475569;"><span style="color: #2563EB; margin-right: 8px;">&#10003;</span> Real-time GPS tracking</td></tr>
+                      <tr><td style="padding: 6px 0; font-size: 14px; color: #475569;"><span style="color: #2563EB; margin-right: 8px;">&#10003;</span> Location history</td></tr>
+                      <tr><td style="padding: 6px 0; font-size: 14px; color: #475569;"><span style="color: #2563EB; margin-right: 8px;">&#10003;</span> Speed alerts &amp; geofencing</td></tr>
+                      <tr><td style="padding: 6px 0; font-size: 14px; color: #475569;"><span style="color: #2563EB; margin-right: 8px;">&#10003;</span> Mobile &amp; Web access</td></tr>
+                      <tr><td style="padding: 6px 0; font-size: 14px; color: #475569;"><span style="color: #2563EB; margin-right: 8px;">&#10003;</span> 24/7 monitoring</td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0 0 8px; font-size: 14px; color: #334155; text-align: center;">Your subscription will automatically renew at the end of each billing period.</p>
+              <p style="margin: 0; font-size: 14px; color: #64748B; text-align: center;">You can manage your subscription anytime from your account settings.</p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #64748B;">— DriveCore Team</p>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #94A3B8;">Smart vehicle tracking</p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">Company No. 16750234 · ICO Registered under UK GDPR - ZC093182 · VAT GB510012376</p>
+              <p style="margin: 12px 0 0; font-size: 12px;">
+                <a href="https://drivecore.co.uk/privacy-policy" style="color: #1E40AF; text-decoration: underline;">Privacy Policy</a>
+                <span style="color: #94A3B8;"> · </span>
+                <a href="https://drivecore.co.uk/terms" style="color: #1E40AF; text-decoration: underline;">Terms of Service</a>
               </p>
-              <p style="margin-top: 20px;">
-                Questions? Contact us at <a href="mailto:support@drivecore.co.uk" style="color: #3b82f6;">support@drivecore.co.uk</a>
-              </p>
-              <p style="margin-top: 20px; color: #ccc;">
-                You're receiving this email because you made a purchase at DriveCore.
-              </p>
-            </div>
-          </div>
-        </body>
-        </html>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">&copy; ${new Date().getFullYear()} DRIVECORE LTD. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
       `
     };
 
