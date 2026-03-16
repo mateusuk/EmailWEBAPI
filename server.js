@@ -18,7 +18,7 @@ app.use(express.json());
 const verificationTokens = new Map();
 
 // Settings
-const SENDER_EMAIL = process.env.SENDER_EMAIL || 'noreply@drivecore.co.uk';
+const SENDER_EMAIL = process.env.SENDER_EMAIL || 'support@drivecore.co.uk';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 /**
@@ -65,7 +65,7 @@ app.post('/api/send-verification', async (req, res) => {
     // Email template
     const msg = {
       to: email,
-      from: SENDER_EMAIL,
+      from: { email: SENDER_EMAIL, name: 'DriveCore' },
       subject: 'Verify your email address',
       text: `Hello!\n\nClick the link below to verify your email:\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you did not request this verification, please ignore this email.`,
       html: `
@@ -200,7 +200,7 @@ app.post('/api/resend-verification', async (req, res) => {
 
     const msg = {
       to: email,
-      from: SENDER_EMAIL,
+      from: { email: SENDER_EMAIL, name: 'DriveCore' },
       subject: 'Verify your email address',
       text: `Hello!\n\nClick the link below to verify your email:\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you did not request this verification, please ignore this email.`,
       html: `
@@ -441,7 +441,7 @@ app.post('/api/send-transfer-notification', async (req, res) => {
     // Email template for tracker transfer
     const msg = {
       to: email,
-      from: SENDER_EMAIL,
+      from: { email: SENDER_EMAIL, name: 'DriveCore' },
       subject: `Vehicle Tracker Transfer Request - ${trackerDetails.vehicleName || 'GPS Tracker'}`,
       text: `Hello!\n\nYou have received a vehicle tracker transfer request.\n\nVehicle: ${trackerDetails.vehicleName}\nRegistration: ${trackerDetails.registrationNumber || 'N/A'}\nTracker IMEI: ${trackerDetails.imei}\n${fromUserName ? `From: ${fromUserName}\n` : ''}\nTo get started, register your account and choose a subscription plan.\n\nClick here to get started: ${acceptUrl}\n\nIf you did not expect this transfer, please ignore this email.`,
       html: `
@@ -633,7 +633,7 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
     // Email template - Welcome after purchase
     const msg = {
       to: email,
-      from: SENDER_EMAIL,
+      from: { email: SENDER_EMAIL, name: 'DriveCore' },
       subject: `🎉 Welcome to DriveCore - Payment Successful!`,
       text: `Hello ${firstName}!\n\nThank you for your purchase! Your payment was successful.\n\nPlan: ${displayPlanName}\n${displayPrice ? `Price: ${displayPrice}\n` : ''}\n\nBefore you can start tracking ${displayVehicle}, please verify your email address by clicking the link below:\n\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you have any questions, feel free to contact our support team.\n\nWelcome aboard!\nThe DriveCore Team`,
       html: `
