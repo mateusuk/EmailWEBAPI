@@ -779,6 +779,247 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
 });
 
 /**
+ * POST /api/send-purchase-confirmation
+ * Stripe backend — after Enterprise Ops or hardware checkout (webhook).
+ * Body: { kind: "enterprise_ops" | "hardware", email, firstName, planName, planPrice,
+ *   productTitle?, heroImageUrl?, quantity?, ctaUrl, ctaLabel, orderRef?, orderNumber? }
+ * orderNumber: only for hardware (e.g. DC-HW-XXXXXXXX); subscriptions do not use it.
+ */
+app.post('/api/send-purchase-confirmation', async (req, res) => {
+  try {
+    const {
+      kind,
+      email,
+      firstName,
+      planName,
+      planPrice,
+      productTitle,
+      heroImageUrl,
+      quantity,
+      ctaUrl,
+      ctaLabel,
+      orderNumber,
+    } = req.body;
+
+    if (!email || !firstName || !kind || !ctaUrl || !ctaLabel) {
+      return res.status(400).json({
+        success: false,
+        error: 'email, firstName, kind, ctaUrl, and ctaLabel are required',
+      });
+    }
+
+    const displayPlan = planName || 'Enterprise Operations';
+    const displayPrice = planPrice || '';
+    const displayProduct = productTitle || displayPlan;
+    const qtyNum = quantity != null ? Number(quantity) : 1;
+
+    const purchaseFooter = `
+          <tr>
+            <td style="padding: 24px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
+              <p style="margin: 0; font-size: 13px; color: #64748B;">— DriveCore Team</p>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #94A3B8;">Smart vehicle tracking</p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">Company No. 16750234 · ICO Registered under UK GDPR - ZC093182 · VAT GB510012376</p>
+              <p style="margin: 12px 0 0; font-size: 12px;">
+                <a href="https://drivecore.co.uk/privacy-policy" style="color: #1E40AF; text-decoration: underline;">Privacy Policy</a>
+                <span style="color: #94A3B8;"> · </span>
+                <a href="https://drivecore.co.uk/terms" style="color: #1E40AF; text-decoration: underline;">Terms of Service</a>
+              </p>
+              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">&copy; ${new Date().getFullYear()} DRIVECORE LTD. All rights reserved.</p>
+            </td>
+          </tr>`;
+
+    let innerHtml = '';
+    let subject = '';
+    let textBody = '';
+
+    if (kind === 'enterprise_ops') {
+      subject = '🎉 Payment Successful! — Enterprise Operations';
+      textBody = `Hello ${firstName}!\n\nThank you for choosing DriveCore.\n\nYour Enterprise Operations subscription is active.\nPlan: ${displayPlan}\n${displayPrice ? `Price: ${displayPrice}\n` : ''}\n${ctaLabel}: ${ctaUrl}\n\n— DriveCore Team`;
+      innerHtml = `
+              <p style="margin: 0 0 10px; font-size: 18px; line-height: 1.6; color: #0F172A; font-weight: 600;">Thank you for choosing DriveCore!</p>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Your payment has been processed successfully. Your account is already verified — no email verification step is needed. Your <strong>Enterprise Operations</strong> add-on is now active.</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F1F5F9; border-radius: 16px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Your Plan</span>
+                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 22px; font-weight: 700;">${displayPlan}</p>
+                        </td>
+                      </tr>
+                      ${
+                        displayPrice
+                          ? `<tr>
+                        <td style="padding-top: 15px;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Price</span>
+                          <p style="margin: 5px 0 0; color: #2563EB; font-size: 20px; font-weight: 600;">${displayPrice}</p>
+                        </td>
+                      </tr>`
+                          : ''
+                      }
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F8FAFC; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 15px; color: #0F172A; font-size: 14px; font-weight: 600;">What&apos;s next?</p>
+                    <ol style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;">
+                      <li>Open your enterprise dashboard</li>
+                      <li>Use fleet and operations tools included in your plan</li>
+                      <li>Contact support if you need help with billing</li>
+                    </ol>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding: 8px 0 8px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" align="center">
+                      <tr>
+                        <td align="center" bgcolor="#2563EB" style="border-radius: 12px; padding: 16px 40px; background-color: #2563EB;">
+                          <a href="${ctaUrl}" style="color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none;">${ctaLabel}</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>`;
+    } else if (kind === 'hardware') {
+      subject = `🎉 Payment Successful! — Hardware order${orderNumber ? ` ${orderNumber}` : ''}`;
+      textBody = `Hello ${firstName}!\n\nThank you for choosing DriveCore.\n${orderNumber ? `Order number: ${orderNumber}\n` : ''}Product: ${displayProduct}\n${qtyNum > 1 ? `Quantity: ${qtyNum}\n` : ''}${displayPrice ? `Total: ${displayPrice}\n` : ''}\n${ctaLabel}: ${ctaUrl}\n\n— DriveCore Team`;
+      const heroBlock =
+        heroImageUrl &&
+        `<div style="text-align: center; margin: 0 0 24px;">
+                <img src="${heroImageUrl}" alt="${displayProduct}" style="max-width: 100%; max-height: 240px; object-fit: contain; border-radius: 12px;" />
+              </div>`;
+      const orderRows =
+        orderNumber &&
+        `<tr>
+                        <td style="padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Order number</span>
+                          <p style="margin: 5px 0 0; color: #065F46; font-size: 20px; font-weight: 800; letter-spacing: 0.5px;">${orderNumber}</p>
+                          <p style="margin: 6px 0 0; font-size: 13px; color: #64748B;">Quote this for support or shipping questions.</p>
+                        </td>
+                      </tr>`;
+      const qtyRow =
+        qtyNum > 1
+          ? `<tr>
+                        <td style="padding-top: 15px; padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Quantity</span>
+                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 18px; font-weight: 700;">${qtyNum}</p>
+                        </td>
+                      </tr>`
+          : '';
+      innerHtml = `
+              <p style="margin: 0 0 10px; font-size: 18px; line-height: 1.6; color: #0F172A; font-weight: 600;">Thank you for choosing DriveCore!</p>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Your payment has been processed successfully. We&apos;ll ship your hardware to the address you entered at checkout.</p>
+              ${heroBlock || ''}
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F1F5F9; border-radius: 16px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      ${orderRows || ''}
+                      <tr>
+                        <td style="${orderRows ? 'padding-top: 15px; padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;' : 'padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;'}">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Product</span>
+                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 22px; font-weight: 700;">${displayProduct}</p>
+                        </td>
+                      </tr>
+                      ${qtyRow}
+                      ${
+                        displayPrice
+                          ? `<tr>
+                        <td style="padding-top: 15px;">
+                          <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Total paid</span>
+                          <p style="margin: 5px 0 0; color: #2563EB; font-size: 20px; font-weight: 600;">${displayPrice}</p>
+                        </td>
+                      </tr>`
+                          : ''
+                      }
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F8FAFC; border-radius: 12px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0; color: #475569; font-size: 14px; line-height: 1.6;">We&apos;ll prepare your device for dispatch. You may receive further updates by email. Reply to support if you need to change shipping details before dispatch.</p>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding: 8px 0 8px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" align="center">
+                      <tr>
+                        <td align="center" bgcolor="#2563EB" style="border-radius: 12px; padding: 16px 40px; background-color: #2563EB;">
+                          <a href="${ctaUrl}" style="color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none;">${ctaLabel}</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>`;
+    } else {
+      return res.status(400).json({ success: false, error: 'kind must be enterprise_ops or hardware' });
+    }
+
+    const msg = {
+      to: email,
+      from: { email: SENDER_EMAIL, name: 'DriveCore' },
+      subject,
+      text: textBody,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriveCore</title>
+</head>
+<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow: hidden;">
+          <tr>
+            <td bgcolor="#1E293B" style="background: linear-gradient(135deg, #0C1220 0%, #1E293B 50%, #1E3A8A 100%); background-color: #1E293B; padding: 40px 32px 32px; text-align: center;">
+              <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
+              <div style="height: 20px;"></div>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Payment Successful!</h1>
+              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">Welcome to DriveCore, ${firstName}!</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 32px 40px;">
+              ${innerHtml}
+            </td>
+          </tr>
+          ${purchaseFooter}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+    };
+
+    await sgMail.send(msg);
+    res.json({ success: true, message: 'Purchase confirmation email sent' });
+  } catch (error) {
+    console.error('Error sending purchase confirmation:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send purchase confirmation email',
+      details: error.message,
+    });
+  }
+});
+
+/**
  * POST /api/send-device-added
  * Sends an email when an existing user adds a new device
  * Body: { 
@@ -1126,6 +1367,7 @@ app.listen(PORT, () => {
   ║   Endpoints:                                                   ║
   ║   POST /api/send-verification       → Send verification email  ║
   ║   POST /api/send-welcome-purchase   → Welcome + verify email   ║
+  ║   POST /api/send-purchase-confirmation → Ops / hardware paid   ║
   ║   POST /api/send-device-added       → Device added email       ║
   ║   POST /api/send-invoice            → Send payment receipt     ║
   ║   POST /api/send-transfer-notification → Tracker transfer email║
