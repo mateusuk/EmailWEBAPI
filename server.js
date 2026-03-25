@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const sgMail = require('@sendgrid/mail');
 const { v4: uuidv4 } = require('uuid');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,59 +11,113 @@ const PORT = process.env.PORT || 3000;
 // Configure SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+// Settings
+const SENDER_EMAIL = process.env.SENDER_EMAIL || 'support@drivecore.co.uk';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const EMAIL_API_KEY = process.env.EMAIL_API_KEY || '';
+
+const ALLOWED_ORIGINS = [
+  FRONTEND_URL,
+  'https://drivecore.co.uk',
+  'https://www.drivecore.co.uk',
+  'https://drivecore-4ae46.web.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+];
+
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'X-API-Key'],
+}));
+app.use(express.json({ limit: '100kb' }));
+
+// API key authentication middleware
+function requireApiKey(req, res, next) {
+  if (!EMAIL_API_KEY) {
+    return next();
+  }
+  const key = req.headers['x-api-key'];
+  if (key !== EMAIL_API_KEY) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  next();
+}
+
+// Rate limiting: 20 requests per minute per IP for email endpoints
+const emailLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many requests, please try again later' },
+});
+
+// HTML escaping to prevent injection in email templates
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Validate that a URL belongs to trusted domains
+const TRUSTED_DOMAINS = [
+  'drivecore.co.uk',
+  'www.drivecore.co.uk',
+  'drivecore-4ae46.web.app',
+  'drivecore-4ae46.firebaseapp.com',
+  'localhost',
+];
+
+function isAllowedUrl(url) {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return TRUSTED_DOMAINS.some(d => parsed.hostname === d || parsed.hostname.endsWith('.' + d));
+  } catch {
+    return false;
+  }
+}
 
 // Temporary token storage (in production, use a database)
 const verificationTokens = new Map();
 
-// Settings
-const SENDER_EMAIL = process.env.SENDER_EMAIL || 'support@drivecore.co.uk';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-
-/**
- * POST /api/send-verification
- * Sends a verification email to the user
- * Body: { email: string, userId?: string, callbackUrl?: string }
- */
-app.post('/api/send-verification', async (req, res) => {
+// Shared verification email sender (deduplicates send-verification and resend-verification)
+async function sendVerificationEmailHandler(req, res) {
   try {
     const { email, userId, callbackUrl } = req.body;
 
     if (!email) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Email is required' 
-      });
+      return res.status(400).json({ success: false, error: 'Email is required' });
     }
 
     let verificationUrl;
 
-    // If callbackUrl contains Firebase oobCode or is a direct frontend verify link, use it directly
     if (callbackUrl && (callbackUrl.includes('oobCode=') || callbackUrl.includes('mode=verifyEmail'))) {
       verificationUrl = callbackUrl;
-      console.log('Using Firebase/direct verification link for send-verification');
-    } else {
-      // Fallback: Generate our own token (legacy behavior)
+    } else if (callbackUrl && isAllowedUrl(callbackUrl)) {
       const token = uuidv4();
-      const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
-      // Store token
-      verificationTokens.set(token, {
-        email,
-        userId: userId || null,
-        expiresAt,
-        verified: false
-      });
-
-      verificationUrl = callbackUrl 
-        ? `${callbackUrl}?token=${token}`
-        : `${FRONTEND_URL}/verify?token=${token}`;
-      console.log('Using custom token verification for send-verification');
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+      verificationTokens.set(token, { email, userId: userId || null, expiresAt, verified: false });
+      verificationUrl = `${callbackUrl}?token=${token}`;
+    } else {
+      const token = uuidv4();
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+      verificationTokens.set(token, { email, userId: userId || null, expiresAt, verified: false });
+      verificationUrl = `${FRONTEND_URL}/verify?token=${token}`;
     }
 
-    // Email template
     const msg = {
       to: email,
       from: { email: SENDER_EMAIL, name: 'DriveCore' },
@@ -81,7 +136,6 @@ app.post('/api/send-verification', async (req, res) => {
     <tr>
       <td align="center">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow: hidden;">
-          <!-- Header with logo -->
           <tr>
             <td bgcolor="#1E293B" style="background: linear-gradient(135deg, #0C1220 0%, #1E293B 50%, #1E3A8A 100%); background-color: #1E293B; padding: 40px 32px 32px; text-align: center;">
               <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
@@ -90,11 +144,9 @@ app.post('/api/send-verification', async (req, res) => {
               <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">DriveCore Vehicle Tracking</p>
             </td>
           </tr>
-          <!-- Content -->
           <tr>
             <td style="padding: 36px 32px 40px;">
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">We're almost there! Click the button below to confirm your email address and activate your account.</p>
-              <!-- CTA Button -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center" style="padding: 8px 0 24px;">
@@ -108,7 +160,6 @@ app.post('/api/send-verification', async (req, res) => {
                   </td>
                 </tr>
               </table>
-              <!-- Plain link -->
               <div style="background: #F8FAFC; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
                 <p style="margin: 0 0 8px; font-size: 12px; color: #64748B; font-weight: 600;">Or copy this link:</p>
                 <a href="${verificationUrl}" style="font-size: 13px; color: #1E40AF; word-break: break-all; text-decoration: underline;">${verificationUrl}</a>
@@ -117,7 +168,6 @@ app.post('/api/send-verification', async (req, res) => {
               <p style="margin: 8px 0 0; font-size: 13px; color: #94A3B8;">If you didn't request this, please ignore this email.</p>
             </td>
           </tr>
-          <!-- Footer -->
           <tr>
             <td style="padding: 24px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
               <p style="margin: 0; font-size: 13px; color: #64748B;">— DriveCore Team</p>
@@ -141,159 +191,16 @@ app.post('/api/send-verification', async (req, res) => {
     };
 
     await sgMail.send(msg);
-
-    const response = { 
-      success: true, 
-      message: 'Verification email sent successfully'
-    };
-    if (typeof token !== 'undefined') {
-      response.token = token;
-    }
-    res.json(response);
+    res.json({ success: true, message: 'Verification email sent successfully' });
 
   } catch (error) {
-    console.error('Error sending email:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to send verification email',
-      details: error.message
-    });
+    console.error('Error sending verification email:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to send verification email' });
   }
-});
+}
 
-/**
- * POST /api/resend-verification
- * Alias for /api/send-verification - resends verification email
- * Body: { email: string, userId?: string, callbackUrl?: string }
- */
-app.post('/api/resend-verification', async (req, res) => {
-  // Forward to send-verification handler
-  try {
-    const { email, userId, callbackUrl } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Email is required' 
-      });
-    }
-
-    let verificationUrl;
-
-    // If callbackUrl contains Firebase oobCode or is a direct frontend verify link, use it directly
-    if (callbackUrl && (callbackUrl.includes('oobCode=') || callbackUrl.includes('mode=verifyEmail'))) {
-      verificationUrl = callbackUrl;
-      console.log('Using Firebase/direct verification link for resend');
-    } else {
-      // Fallback: Generate our own token
-      const token = uuidv4();
-      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
-
-      verificationTokens.set(token, {
-        email,
-        userId: userId || null,
-        expiresAt,
-        verified: false
-      });
-
-      verificationUrl = callbackUrl 
-        ? `${callbackUrl}?token=${token}`
-        : `${FRONTEND_URL}/verify?token=${token}`;
-    }
-
-    const msg = {
-      to: email,
-      from: { email: SENDER_EMAIL, name: 'DriveCore' },
-      subject: 'Verify your email address',
-      text: `Hello!\n\nClick the link below to verify your email:\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you did not request this verification, please ignore this email.`,
-      html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Your Email - DriveCore</title>
-</head>
-<body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: linear-gradient(135deg, #0C1220 0%, #1E3A8A 100%); padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; background: #ffffff; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); overflow: hidden;">
-          <!-- Header with logo -->
-          <tr>
-            <td bgcolor="#1E293B" style="background: linear-gradient(135deg, #0C1220 0%, #1E293B 50%, #1E3A8A 100%); background-color: #1E293B; padding: 40px 32px 32px; text-align: center;">
-              <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
-              <div style="height: 20px;"></div>
-              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Verify Your Email</h1>
-              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">DriveCore Vehicle Tracking</p>
-            </td>
-          </tr>
-          <!-- Content -->
-          <tr>
-            <td style="padding: 36px 32px 40px;">
-              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Click the button below to confirm your email address and activate your account.</p>
-              <!-- CTA Button -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td align="center" style="padding: 8px 0 24px;">
-                    <table role="presentation" cellspacing="0" cellpadding="0" align="center">
-                      <tr>
-                        <td align="center" bgcolor="#2563EB" style="border-radius: 12px; padding: 16px 40px; background-color: #2563EB;">
-                          <a href="${verificationUrl}" style="color: #ffffff !important; font-size: 16px; font-weight: 600; text-decoration: none;">Verify Email</a>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-              <!-- Plain link -->
-              <div style="background: #F8FAFC; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
-                <p style="margin: 0 0 8px; font-size: 12px; color: #64748B; font-weight: 600;">Or copy this link:</p>
-                <a href="${verificationUrl}" style="font-size: 13px; color: #1E40AF; word-break: break-all; text-decoration: underline;">${verificationUrl}</a>
-              </div>
-              <p style="margin: 0; font-size: 13px; color: #94A3B8;">This link expires in 24 hours.</p>
-              <p style="margin: 8px 0 0; font-size: 13px; color: #94A3B8;">If you didn't request this, please ignore this email.</p>
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 24px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; text-align: center;">
-              <p style="margin: 0; font-size: 13px; color: #64748B;">— DriveCore Team</p>
-              <p style="margin: 4px 0 0; font-size: 12px; color: #94A3B8;">Smart vehicle tracking</p>
-              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">Company No. 16750234 · ICO Registered under UK GDPR - ZC093182 · VAT GB510012376</p>
-              <p style="margin: 12px 0 0; font-size: 12px;">
-                <a href="https://drivecore.co.uk/privacy-policy" style="color: #1E40AF; text-decoration: underline;">Privacy Policy</a>
-                <span style="color: #94A3B8;"> · </span>
-                <a href="https://drivecore.co.uk/terms" style="color: #1E40AF; text-decoration: underline;">Terms of Service</a>
-              </p>
-              <p style="margin: 8px 0 0; font-size: 11px; color: #94A3B8;">&copy; ${new Date().getFullYear()} DRIVECORE LTD. All rights reserved.</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-      `
-    };
-
-    await sgMail.send(msg);
-
-    res.json({ 
-      success: true, 
-      message: 'Verification email resent successfully'
-    });
-
-  } catch (error) {
-    console.error('Error resending email:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to resend verification email',
-      details: error.message
-    });
-  }
-});
+app.post('/api/send-verification', requireApiKey, emailLimiter, sendVerificationEmailHandler);
+app.post('/api/resend-verification', requireApiKey, emailLimiter, sendVerificationEmailHandler);
 
 /**
  * GET /api/verify/:token
@@ -427,7 +334,7 @@ app.get('/api/check/:token', (req, res) => {
  *   subscriptionEndDate?: string
  * }
  */
-app.post('/api/send-transfer-notification', async (req, res) => {
+app.post('/api/send-transfer-notification', requireApiKey, emailLimiter, async (req, res) => {
   try {
     const { email, transferId, trackerDetails, fromUserName } = req.body;
 
@@ -438,14 +345,18 @@ app.post('/api/send-transfer-notification', async (req, res) => {
       });
     }
 
-    // Link goes to registration page with IMEI and email pre-filled, plus transfer ID
+    const safeFromUserName = escapeHtml(fromUserName);
+    const safeVehicleName = escapeHtml(trackerDetails.vehicleName || 'GPS Tracker');
+    const safeRegNumber = escapeHtml(trackerDetails.registrationNumber || '');
+    const safeImei = escapeHtml(trackerDetails.imei);
+
     const acceptUrl = `${FRONTEND_URL}/register?imei=${encodeURIComponent(trackerDetails.imei)}&transferId=${encodeURIComponent(transferId)}&email=${encodeURIComponent(email)}`;
 
     // Email template for tracker transfer
     const msg = {
       to: email,
       from: { email: SENDER_EMAIL, name: 'DriveCore' },
-      subject: `Vehicle Tracker Transfer Request - ${trackerDetails.vehicleName || 'GPS Tracker'}`,
+      subject: `Vehicle Tracker Transfer Request - ${safeVehicleName}`,
       text: `Hello!\n\nYou have received a vehicle tracker transfer request.\n\nVehicle: ${trackerDetails.vehicleName}\nRegistration: ${trackerDetails.registrationNumber || 'N/A'}\nTracker IMEI: ${trackerDetails.imei}\n${fromUserName ? `From: ${fromUserName}\n` : ''}\nTo get started, register your account and choose a subscription plan.\n\nClick here to get started: ${acceptUrl}\n\nIf you did not expect this transfer, please ignore this email.`,
       html: `
 <!DOCTYPE html>
@@ -472,8 +383,8 @@ app.post('/api/send-transfer-notification', async (req, res) => {
           <!-- Content -->
           <tr>
             <td style="padding: 36px 32px 40px;">
-              ${fromUserName ? `
-              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;"><strong>${fromUserName}</strong> wants to transfer a vehicle tracker to you.</p>
+              ${safeFromUserName ? `
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;"><strong>${safeFromUserName}</strong> wants to transfer a vehicle tracker to you.</p>
               ` : `
               <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Someone wants to transfer a vehicle tracker to you.</p>
               `}
@@ -485,21 +396,21 @@ app.post('/api/send-transfer-notification', async (req, res) => {
                       <tr>
                         <td style="padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;">
                           <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Vehicle Name</span>
-                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 20px; font-weight: 600;">${trackerDetails.vehicleName || 'GPS Tracker'}</p>
+                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 20px; font-weight: 600;">${safeVehicleName}</p>
                         </td>
                       </tr>
-                      ${trackerDetails.registrationNumber ? `
+                      ${safeRegNumber ? `
                       <tr>
                         <td style="padding: 15px 0; border-bottom: 1px solid #E2E8F0;">
                           <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Registration</span>
-                          <p style="margin: 5px 0 0; color: #1E293B; font-size: 18px; font-weight: 500;">${trackerDetails.registrationNumber}</p>
+                          <p style="margin: 5px 0 0; color: #1E293B; font-size: 18px; font-weight: 500;">${safeRegNumber}</p>
                         </td>
                       </tr>
                       ` : ''}
                       <tr>
                         <td style="padding-top: 15px;">
                           <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Tracker IMEI</span>
-                          <p style="margin: 5px 0 0; color: #475569; font-size: 14px; font-family: monospace;">${trackerDetails.imei}</p>
+                          <p style="margin: 5px 0 0; color: #475569; font-size: 14px; font-family: monospace;">${safeImei}</p>
                         </td>
                       </tr>
                     </table>
@@ -568,12 +479,8 @@ app.post('/api/send-transfer-notification', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error sending transfer email:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to send transfer notification email',
-      details: error.message
-    });
+    console.error('Error sending transfer email:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to send transfer notification email' });
   }
 });
 
@@ -590,7 +497,7 @@ app.post('/api/send-transfer-notification', async (req, res) => {
  *   callbackUrl?: string
  * }
  */
-app.post('/api/send-welcome-purchase', async (req, res) => {
+app.post('/api/send-welcome-purchase', requireApiKey, emailLimiter, async (req, res) => {
   try {
     const { email, userId, firstName, planName, planPrice, vehicleName, callbackUrl } = req.body;
 
@@ -601,44 +508,33 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
       });
     }
 
-    // Determine verification URL
     let verificationUrl;
     
-    // If callbackUrl is a complete Firebase verification link (contains oobCode), use it directly
-    // Firebase links look like: https://xxx.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=xxx
     if (callbackUrl && (callbackUrl.includes('oobCode=') || callbackUrl.includes('firebaseapp.com') || callbackUrl.includes('mode=verifyEmail'))) {
-      // Use Firebase verification link directly - no token generation needed
       verificationUrl = callbackUrl;
-      console.log('Using Firebase verification link directly');
-    } else {
-      // Fallback: Generate our own token (legacy behavior)
+    } else if (callbackUrl && isAllowedUrl(callbackUrl)) {
       const token = uuidv4();
-      const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
-      // Store token
-      verificationTokens.set(token, {
-        email,
-        userId: userId || null,
-        expiresAt,
-        verified: false
-      });
-
-      verificationUrl = callbackUrl 
-        ? `${callbackUrl}?token=${token}`
-        : `${FRONTEND_URL}/verify?token=${token}`;
-      console.log('Using custom token verification');
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+      verificationTokens.set(token, { email, userId: userId || null, expiresAt, verified: false });
+      verificationUrl = `${callbackUrl}?token=${token}`;
+    } else {
+      const token = uuidv4();
+      const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+      verificationTokens.set(token, { email, userId: userId || null, expiresAt, verified: false });
+      verificationUrl = `${FRONTEND_URL}/verify?token=${token}`;
     }
 
-    const displayPlanName = planName || 'GPS Tracker';
-    const displayPrice = planPrice || '';
-    const displayVehicle = vehicleName || 'your vehicle';
+    const safeFirstName = escapeHtml(firstName);
+    const displayPlanName = escapeHtml(planName || 'GPS Tracker');
+    const displayPrice = escapeHtml(planPrice || '');
+    const displayVehicle = escapeHtml(vehicleName || 'your vehicle');
 
     // Email template - Welcome after purchase
     const msg = {
       to: email,
       from: { email: SENDER_EMAIL, name: 'DriveCore' },
-      subject: `🎉 Welcome to DriveCore - Payment Successful!`,
-      text: `Hello ${firstName}!\n\nThank you for your purchase! Your payment was successful.\n\nPlan: ${displayPlanName}\n${displayPrice ? `Price: ${displayPrice}\n` : ''}\n\nBefore you can start tracking ${displayVehicle}, please verify your email address by clicking the link below:\n\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you have any questions, feel free to contact our support team.\n\nWelcome aboard!\nThe DriveCore Team`,
+      subject: '🎉 Welcome to DriveCore - Payment Successful!',
+      text: `Hello ${firstName}!\n\nThank you for your purchase! Your payment was successful.\n\nPlan: ${planName || 'GPS Tracker'}\n${planPrice ? `Price: ${planPrice}\n` : ''}\n\nBefore you can start tracking ${vehicleName || 'your vehicle'}, please verify your email address by clicking the link below:\n\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you have any questions, feel free to contact our support team.\n\nWelcome aboard!\nThe DriveCore Team`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -658,10 +554,9 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
               <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
               <div style="height: 20px;"></div>
               <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Payment Successful!</h1>
-              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">Welcome to DriveCore, ${firstName}!</p>
+              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">Welcome to DriveCore, ${safeFirstName}!</p>
             </td>
           </tr>
-          <!-- Content -->
           <tr>
             <td style="padding: 36px 32px 40px;">
               <p style="margin: 0 0 10px; font-size: 18px; line-height: 1.6; color: #0F172A; font-weight: 600;">Thank you for choosing DriveCore!</p>
@@ -759,22 +654,11 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
 
     await sgMail.send(msg);
 
-    const response = { 
-      success: true, 
-      message: 'Welcome email sent successfully'
-    };
-    if (typeof token !== 'undefined') {
-      response.token = token;
-    }
-    res.json(response);
+    res.json({ success: true, message: 'Welcome email sent successfully' });
 
   } catch (error) {
-    console.error('Error sending welcome email:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to send welcome email',
-      details: error.message
-    });
+    console.error('Error sending welcome email:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to send welcome email' });
   }
 });
 
@@ -785,7 +669,7 @@ app.post('/api/send-welcome-purchase', async (req, res) => {
  *   productTitle?, heroImageUrl?, quantity?, ctaUrl, ctaLabel, orderRef?, orderNumber? }
  * orderNumber: only for hardware (e.g. DC-HW-XXXXXXXX); subscriptions do not use it.
  */
-app.post('/api/send-purchase-confirmation', async (req, res) => {
+app.post('/api/send-purchase-confirmation', requireApiKey, emailLimiter, async (req, res) => {
   try {
     const {
       kind,
@@ -808,9 +692,11 @@ app.post('/api/send-purchase-confirmation', async (req, res) => {
       });
     }
 
-    const displayPlan = planName || 'Enterprise Operations';
-    const displayPrice = planPrice || '';
-    const displayProduct = productTitle || displayPlan;
+    const safeFirstName2 = escapeHtml(firstName);
+    const displayPlan = escapeHtml(planName || 'Enterprise Operations');
+    const displayPrice = escapeHtml(planPrice || '');
+    const displayProduct = escapeHtml(productTitle || planName || 'Enterprise Operations');
+    const safeOrderNumber = escapeHtml(orderNumber || '');
     const qtyNum = quantity != null ? Number(quantity) : 1;
 
     const purchaseFooter = `
@@ -891,16 +777,16 @@ app.post('/api/send-purchase-confirmation', async (req, res) => {
       subject = `🎉 Payment Successful! — Hardware order${orderNumber ? ` ${orderNumber}` : ''}`;
       textBody = `Hello ${firstName}!\n\nThank you for choosing DriveCore.\n${orderNumber ? `Order number: ${orderNumber}\n` : ''}Product: ${displayProduct}\n${qtyNum > 1 ? `Quantity: ${qtyNum}\n` : ''}${displayPrice ? `Total: ${displayPrice}\n` : ''}\n${ctaLabel}: ${ctaUrl}\n\n— DriveCore Team`;
       const heroBlock =
-        heroImageUrl &&
+        (heroImageUrl && isAllowedUrl(heroImageUrl)) &&
         `<div style="text-align: center; margin: 0 0 24px;">
                 <img src="${heroImageUrl}" alt="${displayProduct}" style="max-width: 100%; max-height: 240px; object-fit: contain; border-radius: 12px;" />
               </div>`;
       const orderRows =
-        orderNumber &&
+        safeOrderNumber &&
         `<tr>
                         <td style="padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;">
                           <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Order number</span>
-                          <p style="margin: 5px 0 0; color: #065F46; font-size: 20px; font-weight: 800; letter-spacing: 0.5px;">${orderNumber}</p>
+                          <p style="margin: 5px 0 0; color: #065F46; font-size: 20px; font-weight: 800; letter-spacing: 0.5px;">${safeOrderNumber}</p>
                           <p style="margin: 6px 0 0; font-size: 13px; color: #64748B;">Quote this for support or shipping questions.</p>
                         </td>
                       </tr>`;
@@ -990,7 +876,7 @@ app.post('/api/send-purchase-confirmation', async (req, res) => {
               <img src="https://drivecore-4ae46.web.app/email/icon.png" alt="DriveCore" width="80" height="80" style="display: block; margin: 0 auto; border-radius: 18px;" />
               <div style="height: 20px;"></div>
               <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">Payment Successful!</h1>
-              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">Welcome to DriveCore, ${firstName}!</p>
+              <p style="margin: 8px 0 0; font-size: 15px; color: rgba(255,255,255,0.85);">Welcome to DriveCore, ${safeFirstName2}!</p>
             </td>
           </tr>
           <tr>
@@ -1010,12 +896,8 @@ app.post('/api/send-purchase-confirmation', async (req, res) => {
     await sgMail.send(msg);
     res.json({ success: true, message: 'Purchase confirmation email sent' });
   } catch (error) {
-    console.error('Error sending purchase confirmation:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to send purchase confirmation email',
-      details: error.message,
-    });
+    console.error('Error sending purchase confirmation:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to send purchase confirmation email' });
   }
 });
 
@@ -1031,18 +913,18 @@ app.post('/api/send-purchase-confirmation', async (req, res) => {
  *   planPrice?: string
  * }
  */
-app.post('/api/send-device-added', async (req, res) => {
+app.post('/api/send-device-added', requireApiKey, emailLimiter, async (req, res) => {
   try {
     const { email, userId, firstName, vehicleName, planName, planPrice } = req.body;
 
     if (!email || !firstName || !vehicleName) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Email, firstName, and vehicleName are required' 
-      });
+      return res.status(400).json({ success: false, error: 'Email, firstName, and vehicleName are required' });
     }
 
-    const displayPrice = planPrice || '';
+    const safeFirstName = escapeHtml(firstName);
+    const safeVehicleName = escapeHtml(vehicleName);
+    const safePlanName = escapeHtml(planName);
+    const displayPrice = escapeHtml(planPrice || '');
 
     // Email template for device added
     const msg = {
@@ -1051,7 +933,8 @@ app.post('/api/send-device-added', async (req, res) => {
         email: SENDER_EMAIL,
         name: 'DriveCore'
       },
-      subject: `New Device Added - ${vehicleName}`,
+      subject: `New Device Added - ${safeVehicleName}`,
+      text: `Hello ${firstName}!\n\nGreat news! We've successfully added ${vehicleName} to your DriveCore account. Your new subscription is now active.\n\nPlan: ${planName}\n${planPrice ? `Price: ${planPrice}\n` : ''}\n\nLog in to start tracking: ${FRONTEND_URL}/gps/login\n\n— DriveCore Team`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -1077,8 +960,8 @@ app.post('/api/send-device-added', async (req, res) => {
           <!-- Content -->
           <tr>
             <td style="padding: 36px 32px 40px;">
-              <p style="margin: 0 0 10px; font-size: 18px; line-height: 1.6; color: #0F172A; font-weight: 600;">Hello ${firstName}!</p>
-              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Great news! We've successfully added <strong>${vehicleName}</strong> to your DriveCore account. Your new subscription is now active and ready to use.</p>
+              <p style="margin: 0 0 10px; font-size: 18px; line-height: 1.6; color: #0F172A; font-weight: 600;">Hello ${safeFirstName}!</p>
+              <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.6; color: #334155;">Great news! We've successfully added <strong>${safeVehicleName}</strong> to your DriveCore account. Your new subscription is now active and ready to use.</p>
               <!-- Device Details Card -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #F1F5F9; border-radius: 16px; margin-bottom: 24px;">
                 <tr>
@@ -1087,13 +970,13 @@ app.post('/api/send-device-added', async (req, res) => {
                       <tr>
                         <td style="padding-bottom: 15px; border-bottom: 1px solid #E2E8F0;">
                           <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Vehicle Name</span>
-                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 22px; font-weight: 700;">${vehicleName}</p>
+                          <p style="margin: 5px 0 0; color: #0F172A; font-size: 22px; font-weight: 700;">${safeVehicleName}</p>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 15px 0; border-bottom: 1px solid #E2E8F0;">
                           <span style="color: #64748B; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Subscription Plan</span>
-                          <p style="margin: 5px 0 0; color: #2563EB; font-size: 18px; font-weight: 600;">${planName}</p>
+                          <p style="margin: 5px 0 0; color: #2563EB; font-size: 18px; font-weight: 600;">${safePlanName}</p>
                         </td>
                       </tr>
                       ${displayPrice ? `
@@ -1123,7 +1006,7 @@ app.post('/api/send-device-added', async (req, res) => {
                   </td>
                 </tr>
               </table>
-              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.7; color: #334155; text-align: center;">Your device is ready to track! Log in to your account to start monitoring ${vehicleName}.</p>
+              <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.7; color: #334155; text-align: center;">Your device is ready to track! Log in to your account to start monitoring ${safeVehicleName}.</p>
               <!-- CTA Button -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
@@ -1165,20 +1048,11 @@ app.post('/api/send-device-added', async (req, res) => {
 
     await sgMail.send(msg);
 
-    console.log(`✅ Device added email sent to ${email} (Vehicle: ${vehicleName})`);
-
-    res.json({ 
-      success: true, 
-      message: 'Device added email sent successfully' 
-    });
+    res.json({ success: true, message: 'Device added email sent successfully' });
 
   } catch (error) {
-    console.error('❌ Error sending device added email:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to send device added email',
-      details: error.message
-    });
+    console.error('Error sending device added email:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to send device added email' });
   }
 });
 
@@ -1193,7 +1067,7 @@ app.post('/api/send-device-added', async (req, res) => {
  *   invoicePdf?: string
  * }
  */
-app.post('/api/send-invoice', async (req, res) => {
+app.post('/api/send-invoice', requireApiKey, emailLimiter, async (req, res) => {
   try {
     const { email, invoiceId, amount, invoiceUrl, invoicePdf } = req.body;
 
@@ -1311,20 +1185,11 @@ app.post('/api/send-invoice', async (req, res) => {
 
     await sgMail.send(msg);
 
-    console.log(`✅ Invoice email sent to ${email} (Invoice: ${invoiceId})`);
-
-    res.json({ 
-      success: true, 
-      message: 'Invoice email sent successfully' 
-    });
+    res.json({ success: true, message: 'Invoice email sent successfully' });
 
   } catch (error) {
-    console.error('❌ Error sending invoice email:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to send invoice email',
-      details: error.message
-    });
+    console.error('Error sending invoice email:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to send invoice email' });
   }
 });
 
@@ -1348,11 +1213,7 @@ app.delete('/api/token/:token', (req, res) => {
  * Health check endpoint
  */
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    timestamp: new Date().toISOString(),
-    tokensInMemory: verificationTokens.size
-  });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Start server
